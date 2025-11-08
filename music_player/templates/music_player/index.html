@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Web Music Player Django</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'music_player/style.css' %}">
+</head>
+
+<body>
+    <div id="app-container">
+        <h1>🎵 Web Music Player AI 🧠</h1>
+
+        <div id="main-layout">
+            <div id="left-panel">
+                <section id="navigation-filters">
+                    <h2>Libreria</h2>
+                    <div class="filter-group">
+                        <label for="artistFilter">Artista:</label>
+                        <select id="artistFilter">
+                            <option value="all">Tutti</option>
+                            </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="albumFilter">Album:</label>
+                        <select id="albumFilter">
+                            <option value="all">Tutti</option>
+                            </select>
+                    </div>
+                    <p id="filterStatus" class="status-message"></p>
+                </section>
+
+                <hr>
+
+                <section id="ai-generator">
+                    <h2>Genera AI</h2>
+                    <div class="prompt-area">
+                        <input type="text" id="aiPrompt" placeholder="Mood o Genere">
+                        <button id="generatePlaylistBtn">Genera</button>
+                    </div>
+                    <p id="aiStatus" class="status-message"></p>
+                </section>
+            </div>
+
+            <div id="right-panel">
+                <div id="player-main">
+                    <div id="now-playing-info">
+                        <h3>In riproduzione:</h3>
+                        <div id="currentTrack">Nessun brano in riproduzione.</div>
+                    </div>
+
+                    <div id="visualization-area">
+                        <canvas id="visualizer" width="400" height="200"></canvas>
+                        <div id="visualizer-controls">
+                            <label for="visualizerSelector">Visualizzazione:</label>
+                            <select id="visualizerSelector">
+                                <option value="waveform">Onda Psichedelica</option>
+                                <option value="bars">Equalizzatore a Barre</option>
+                                <option value="circles">Pattern Circolare</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="audio-controls">
+                        <audio id="audioPlayer" controls></audio>
+                        <div id="nav-buttons">
+                            <button id="shuffleBtn">Shuffle OFF</button>
+                            <button id="prevBtn" disabled>⏮️ Precedente</button>
+                            <button id="nextBtn" disabled>⏭️ Successivo</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="playlist-section">
+                    <h2>Playlist Corrente</h2>
+                    <ul id="playlist">
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'music_player/app.js' %}"></script>
+</body>
+
+</html>

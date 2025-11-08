@@ -1,0 +1,35 @@
+# ----------------------------------------------------------------------
+# File e cartelle standard di Python e Django da ignorare
+# ----------------------------------------------------------------------
+*.pyc
+*~
+__pycache__/
+myvenv/
+venv/
+.env
+
+# Database locale di Django (SQLite)
+db.sqlite3
+/db.sqlite3
+/music_player/db.sqlite3
+
+# ----------------------------------------------------------------------
+# 🛑 MEDIA E DATI SENSIBILI (CANZONI) 🛑
+# ----------------------------------------------------------------------
+
+# Cartella MEDIA_ROOT dove vengono salvati i file multimediali (le canzoni)
+# Se la tua cartella si chiama 'media' (come da configurazione standard)
+/media/
+
+# Cartella contenente i brani musicali (il percorso assoluto che usi in settings.py)
+# Dalla tua configurazione passata, se Django salva la musica qui:
+/Users/mauroi/Documents/music/
+
+# ----------------------------------------------------------------------
+# File specifici del tuo IDE (VS Code, ecc.)
+# ----------------------------------------------------------------------
+.vscode/
+.DS_Store
+
+# File di log
+*.log
