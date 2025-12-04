@@ -24,7 +24,7 @@ Questa sezione contiene tutti i comandi necessari per clonare, configurare l'amb
     Apri il tuo terminale e usa il seguente comando per clonare il codice sorgente:
 
     ```bash
-    git clone [https://github.com/maurergiorgio/WebMusicPlayerAI.git](https://github.com/maurergiorgio/WebMusicPlayerAI.git)
+    git clone https://github.com/maurobeltrami/WebMusicPlayerAI
     cd WebMusicPlayerAI
     ```
 
