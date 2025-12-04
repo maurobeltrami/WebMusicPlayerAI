@@ -1,395 +1,87 @@
-/*
- * Stili Generali e Layout Principale
- */
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #e0e0e0;
-    color: #333;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-}
+/* --- Stili Personalizzati per il Vertical Slider e l'Ipod Style --- */
 
-#app-container {
-    background: linear-gradient(145deg, #f0f0f0, #cacaca);
-    border-radius: 20px;
-    box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.1), -10px -10px 30px rgba(255, 255, 255, 0.8);
-    padding: 30px;
-    max-width: 1200px;
-    width: 95%;
-    min-height: 800px;
-}
-
-h1 {
-    text-align: center;
-    color: #4a4a4a;
-    margin-bottom: 25px;
-    font-size: 2em;
-}
-
-#main-layout {
-    display: flex;
-    gap: 30px;
-}
-
-/* Pannelli Laterali */
-#left-panel {
-    flex: 1;
-    min-width: 250px;
-    background: #e0e0e0;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff;
-}
-
-#right-panel {
-    flex: 3;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-/* Filtri e Generatore AI */
-.filter-group,
-.prompt-area {
-    margin-bottom: 15px;
-}
-
-select,
-input[type="text"],
-#generatePlaylistBtn {
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    background-color: #f5f5f5;
-    box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
-    width: 100%;
-    box-sizing: border-box;
-    transition: all 0.2s;
-}
-
-input[type="text"]:focus,
-select:focus {
-    outline: none;
-    box-shadow: inset 2px 2px 5px #b0b0b0, inset -2px -2px 5px #fcfcfc;
-}
-
-#generatePlaylistBtn {
-    background-color: #007aff;
-    /* Colore Blu iPod */
-    color: white;
-    cursor: pointer;
-    margin-top: 10px;
-    width: auto;
-    display: inline-block;
-    padding: 10px 20px;
-    box-shadow: 3px 3px 6px #bebebe, -3px -3px 6px #ffffff;
-}
-
-#generatePlaylistBtn:active {
-    box-shadow: inset 3px 3px 6px #bebebe, inset -3px -3px 6px #ffffff;
-}
-
-.status-message {
-    font-size: 0.9em;
-    padding: 5px;
-    border-radius: 5px;
-    text-align: center;
-}
-
-/* Area Principale del Player */
-#player-main {
-    background: #f5f5f5;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-#now-playing-info {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-#currentTrack {
-    font-weight: bold;
-    color: #007aff;
-    margin-bottom: 10px;
-}
-
-/* Barra di Progresso (Nuova) */
-#progress-container {
-    width: 80%;
-    height: 6px;
-    background-color: #ddd;
-    border-radius: 3px;
-    margin: 10px auto;
-}
-
-#progressBar {
+.vertical-slider {
+    -webkit-appearance: none;
+    width: 8px;
+    /* Larghezza del thumb */
     height: 100%;
-    width: 0%;
-    background-color: #4caf50;
-    border-radius: 3px;
-    transition: width 0.1s linear;
-}
-
-#time-display {
-    font-size: 0.8em;
-    color: #666;
-}
-
-/* Visualizer */
-#visualization-area {
-    margin-bottom: 20px;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: #333;
-    /* Sfondo scuro per il visualizer */
-    border-radius: 10px;
-    padding: 10px;
-}
-
-#visualizer {
-    background-color: #1a1a1a;
-    border-radius: 8px;
-    margin-bottom: 10px;
-}
-
-#visualizer-controls label,
-#visualizer-controls select {
-    color: white;
-}
-
-#visualizer-controls select {
-    background-color: #555;
-    color: white;
-}
-
-/* Sezione Playlist */
-#playlist-section {
-    padding: 20px;
-    background: #e0e0e0;
-    border-radius: 15px;
-    box-shadow: inset 3px 3px 8px #bebebe, inset -3px -3px 8px #ffffff;
-}
-
-#playlist {
-    list-style: none;
-    padding: 0;
-}
-
-#playlist li {
-    padding: 10px;
-    margin-bottom: 5px;
-    background-color: #fff;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-#playlist li:hover {
-    background-color: #d1d1d1;
-}
-
-#playlist li.active {
-    background-color: #007aff;
-    color: white;
-    font-weight: bold;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-/*
- * STILI IPOD CLICK WHEEL E VOLUME
- */
-
-#ipod-controls-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 20px;
-    width: 100%;
-}
-
-/* Click Wheel */
-#click-wheel {
-    position: relative;
-    width: 200px;
-    /* Diametro della ruota */
-    height: 200px;
-    border-radius: 50%;
-    background-color: #cacaca;
-    /* Grigio chiaro per la ruota esterna */
-    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2) inset, -5px -5px 15px rgba(255, 255, 255, 0.9) inset;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.wheel-button {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: none;
     background: transparent;
-    color: #333;
-    font-size: 1.1em;
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.1s, background-color 0.1s;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: absolute;
+    top: 0;
+    margin: 0;
 }
 
-.wheel-button:hover {
-    color: #007aff;
-}
-
-.wheel-button:active {
-    color: white;
-    background-color: #666;
-}
-
-/* Posizionamento dei Bottoni */
-.wheel-button.shuffle {
-    top: 15px;
-}
-
-.wheel-button.menu {
-    bottom: 15px;
-    font-size: 0.9em;
-}
-
-.wheel-button.prev {
-    left: 15px;
-}
-
-.wheel-button.next {
-    right: 15px;
-}
-
-/* Tasto Centrale (Play/Pause/Seleziona) */
-#playPauseBtn {
-    width: 70px;
-    height: 70px;
+.vertical-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 12px;
+    width: 12px;
     border-radius: 50%;
-    background-color: #fff;
-    /* Bianco per il centro */
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background: #4A90E2;
+    /* Blu per il volume */
     cursor: pointer;
-    color: #007aff;
-    font-size: 1.5em;
-    transition: background-color 0.1s;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+    margin-top: -2px;
+    /* Centra visivamente */
 }
 
-#playPauseBtn:hover {
-    background-color: #f0f0f0;
+/* Aggiustamento per il layout iPod */
+#shuffleBtn.active {
+    color: #9333ea;
+    /* Viola */
 }
 
-#playPauseBtn:active {
-    background-color: #d1d1d1;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+#prevBtn:disabled,
+#nextBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-/* Slider Volume Laterale */
-#volume-slider-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    height: 150px;
-    justify-content: center;
-    padding: 0 20px;
-    border-radius: 10px;
-    background: #e0e0e0;
-    box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
+#progressControl:hover .absolute {
+    --progress-percent: var(--current-percentage, 0%);
+    /* Variabile CSS per il trascinamento */
 }
 
-.volume-icon {
-    font-size: 1.2em;
-    color: #666;
+/* Stile per la traccia corrente nella playlist */
+#playlist li.active {
+    background-color: #3b82f6;
+    /* Blu */
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5), 0 2px 4px -2px rgba(59, 130, 246, 0.5);
 }
 
+/* Rotazione dello slider per farlo sembrare verticale */
 #volumeSlider {
+    appearance: none;
     width: 100px;
     height: 8px;
-    background: #d3d3d3;
-    outline: none;
-    opacity: 0.7;
-    -webkit-transition: .2s;
-    transition: opacity .2s;
-    transform: rotate(270deg);
-    /* Ruota lo slider per farlo verticale */
-    margin: 40px 0;
+    margin: 0;
+    transform: rotate(-90deg) translateX(-46px);
+    /* 90 gradi e traslazione per centrare */
+    transform-origin: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: #4B5563;
+    /* Grigio scuro per la traccia */
+    border-radius: 4px;
 }
 
 #volumeSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #007aff;
+    width: 16px;
+    height: 16px;
+    background: #34D399;
+    /* Verde chiaro */
     cursor: pointer;
+    border-radius: 50%;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
-#volumeSlider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #007aff;
-    cursor: pointer;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
-
-/* Media Query per la Responsività */
-@media (max-width: 900px) {
-    #main-layout {
-        flex-direction: column;
-    }
-
-    #left-panel {
-        min-width: auto;
-    }
-
-    #player-main {
-        padding: 15px;
-    }
-
-    #ipod-controls-container {
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    #volume-slider-wrapper {
-        flex-direction: row;
-        width: 80%;
-        height: auto;
-        padding: 10px;
-    }
-
-    #volumeSlider {
-        transform: none;
-        /* Rimuove la rotazione su schermi piccoli (slider orizzontale) */
-        width: 100%;
-        margin: 0 10px;
-    }
+/* Se il volume è muto o disabilitato, usiamo un colore diverso per il thumb */
+#muteToggleBtn.active #volumeSlider::-webkit-slider-thumb,
+#volumeSlider:disabled::-webkit-slider-thumb {
+    background: #F87171;
+    /* Rosso */
 }
