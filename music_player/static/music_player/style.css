@@ -1,334 +1,395 @@
-/* music_player/static/music_player/style.css (TEMA WINDOWS MEDIA PLAYER XP - LAYOUT AVANZATO) */
-
-:root {
-    --xp-blue-dark: #3a6ea5;
-    --xp-blue-light: #4186d6;
-    --xp-white: #ffffff;
-    --xp-bg-gray: #d3d3d3;
-    --xp-border-gray: #a6a6a6;
-    --xp-shadow-dark: rgba(0, 0, 0, 0.2);
-    --xp-button-hover: #f0f7ff;
-    --xp-button-active: #95b3d7;
-    --xp-viz-bg: #000000;
-}
-
+/*
+ * Stili Generali e Layout Principale
+ */
 body {
-    font-family: 'Tahoma', 'Verdana', sans-serif;
-    background-color: var(--xp-bg-gray);
-    color: #000;
+    font-family: 'Inter', sans-serif;
+    background-color: #e0e0e0;
+    color: #333;
     margin: 0;
     padding: 20px;
     display: flex;
     justify-content: center;
+    align-items: flex-start;
     min-height: 100vh;
 }
 
 #app-container {
-    background: linear-gradient(to bottom, #d9e9f8 0%, #c4d7ed 100%);
-    padding: 15px 25px 25px;
-    border-radius: 8px;
-    box-shadow: 2px 2px 5px var(--xp-shadow-dark), inset 1px 1px 0 var(--xp-white);
-    max-width: 900px;
-    /* Larghezza maggiore per il layout a due colonne */
-    width: 100%;
-    border: 1px solid var(--xp-border-gray);
-    position: relative;
-    display: flex;
-    /* Utilizziamo flexbox per il layout principale */
-    flex-direction: column;
+    background: linear-gradient(145deg, #f0f0f0, #cacaca);
+    border-radius: 20px;
+    box-shadow: 10px 10px 30px rgba(0, 0, 0, 0.1), -10px -10px 30px rgba(255, 255, 255, 0.8);
+    padding: 30px;
+    max-width: 1200px;
+    width: 95%;
+    min-height: 800px;
 }
 
-/* --- Barra del Titolo (WMP Style) --- */
 h1 {
-    background: linear-gradient(to right, var(--xp-blue-dark), var(--xp-blue-light));
-    color: var(--xp-white);
-    padding: 5px 10px;
-    border-radius: 6px 6px 0 0;
-    margin: -15px -25px 20px;
-    text-align: left;
-    font-size: 1.1em;
-    font-weight: bold;
-    text-shadow: 1px 1px 0 var(--xp-shadow-dark);
-    display: flex;
-    align-items: center;
+    text-align: center;
+    color: #4a4a4a;
+    margin-bottom: 25px;
+    font-size: 2em;
 }
 
-/* --- Layout Principale (Due Colonne) --- */
 #main-layout {
     display: flex;
-    gap: 20px;
-    /* Spazio tra le colonne */
+    gap: 30px;
 }
 
+/* Pannelli Laterali */
 #left-panel {
-    flex: 0 0 200px;
-    /* Larghezza fissa per il pannello di sinistra */
-    padding-right: 15px;
-    border-right: 1px solid #c8c8c8;
-    /* Linea di separazione */
+    flex: 1;
+    min-width: 250px;
+    background: #e0e0e0;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: inset 5px 5px 10px #bebebe, inset -5px -5px 10px #ffffff;
 }
 
 #right-panel {
-    flex-grow: 1;
-    /* Il pannello di destra occupa lo spazio rimanente */
+    flex: 3;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    /* Spazio tra le sezioni nel pannello di destra */
+    gap: 20px;
 }
 
-/* --- Intestazioni di Sezione --- */
-h2 {
-    color: var(--xp-blue-dark);
-    border-bottom: 1px solid var(--xp-border-gray);
-    padding-bottom: 5px;
-    margin-top: 15px;
-    font-size: 1.1em;
-    font-weight: normal;
-}
-
-h3 {
-    color: var(--xp-blue-dark);
-    font-size: 1em;
-    margin-bottom: 5px;
-}
-
-hr {
-    border: none;
-    border-top: 1px solid #c8c8c8;
-    border-bottom: 1px solid var(--xp-white);
-    margin: 15px 0;
-}
-
-/* --- Filtri e AI Generator --- */
+/* Filtri e Generatore AI */
 .filter-group,
 .prompt-area {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-    flex-wrap: wrap;
-    /* Permette agli elementi di andare a capo su schermi più piccoli */
+    margin-bottom: 15px;
 }
 
-#navigation-filters label,
-#visualizer-controls label {
-    font-weight: normal;
-    white-space: nowrap;
-    /* Evita che le label vadano a capo */
-}
-
-#aiPrompt,
-select {
-    padding: 5px 8px;
-    border: 1px solid #7f9db9;
-    background-color: var(--xp-white);
-    border-radius: 0;
-    box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.1);
-    color: #000;
-}
-
-#aiPrompt {
-    flex-grow: 1;
-}
-
-/* --- Player Principale (Visualizzazione, Controlli Audio) --- */
-#player-main {
-    background-color: #f7f7f7;
-    border: 1px solid var(--xp-border-gray);
-    border-radius: 4px;
-    box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+select,
+input[type="text"],
+#generatePlaylistBtn {
     padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background-color: #f5f5f5;
+    box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    box-shadow: inset 2px 2px 5px #b0b0b0, inset -2px -2px 5px #fcfcfc;
+}
+
+#generatePlaylistBtn {
+    background-color: #007aff;
+    /* Colore Blu iPod */
+    color: white;
+    cursor: pointer;
+    margin-top: 10px;
+    width: auto;
+    display: inline-block;
+    padding: 10px 20px;
+    box-shadow: 3px 3px 6px #bebebe, -3px -3px 6px #ffffff;
+}
+
+#generatePlaylistBtn:active {
+    box-shadow: inset 3px 3px 6px #bebebe, inset -3px -3px 6px #ffffff;
+}
+
+.status-message {
+    font-size: 0.9em;
+    padding: 5px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+/* Area Principale del Player */
+#player-main {
+    background: #f5f5f5;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px rgba(255, 255, 255, 0.8);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: center;
 }
 
 #now-playing-info {
+    width: 100%;
     text-align: center;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
 }
 
 #currentTrack {
     font-weight: bold;
-    color: var(--xp-blue-dark);
-    font-size: 0.95em;
-    padding: 5px;
-    background-color: #e8e8e8;
-    border: 1px solid #c8c8c8;
+    color: #007aff;
+    margin-bottom: 10px;
 }
 
-/* --- Area Visualizzatore (Stili aggiornati per discrezione) --- */
+/* Barra di Progresso (Nuova) */
+#progress-container {
+    width: 80%;
+    height: 6px;
+    background-color: #ddd;
+    border-radius: 3px;
+    margin: 10px auto;
+}
+
+#progressBar {
+    height: 100%;
+    width: 0%;
+    background-color: #4caf50;
+    border-radius: 3px;
+    transition: width 0.1s linear;
+}
+
+#time-display {
+    font-size: 0.8em;
+    color: #666;
+}
+
+/* Visualizer */
 #visualization-area {
+    margin-bottom: 20px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0px;
-    /* Riduci gap a 0 */
-    background-color: var(--xp-viz-bg);
-    border: 1px solid #7f9db9;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
-    border-radius: 4px;
-    padding: 0;
-    /* Rimuovi il padding dal container principale */
-    position: relative;
-    /* Necessario per posizionare i controlli in modo assoluto */
+    background: #333;
+    /* Sfondo scuro per il visualizer */
+    border-radius: 10px;
+    padding: 10px;
 }
 
 #visualizer {
-    display: block;
-    max-width: 100%;
-    height: auto;
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    margin-bottom: 10px;
 }
 
-#visualizer-controls {
-    /* Stile discreto: Posizionamento in basso a destra */
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: #cccccc;
-    /* Grigio chiaro per discrezione */
-    background-color: rgba(0, 0, 0, 0.5);
-    /* Sfondo semi-trasparente */
-    border: 1px solid #333;
-    padding: 2px 5px;
-    /* Padding ridotto */
-    border-radius: 3px;
-    font-size: 0.8em;
-    /* Testo molto piccolo */
-    line-height: 1;
+#visualizer-controls label,
+#visualizer-controls select {
+    color: white;
 }
 
-#visualizer-controls label {
-    margin-right: 0px;
-    font-size: 0.9em;
+#visualizer-controls select {
+    background-color: #555;
+    color: white;
 }
 
-#visualizerSelector {
-    /* Riduci le dimensioni del selettore */
-    padding: 1px 3px;
-    border: 1px solid #7f9db9;
-    background-color: #f0f0f0;
-    color: #000;
-    font-size: 0.9em;
-}
-
-/* --- FINE Area Visualizzatore --- */
-
-
-/* --- Controlli Audio --- */
-#audio-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-audio {
-    width: 100%;
-    margin-bottom: 0;
-    /* Rimuovi il margin-bottom predefinito */
-}
-
-#nav-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
-
-/* --- Bottoni (Stile Classico XP) --- */
-button {
-    padding: 6px 12px;
-    cursor: pointer;
-    color: #000;
-    border: 1px solid #000;
-    border-radius: 3px;
-    font-weight: normal;
-    text-transform: none;
-    background: linear-gradient(to top, #c7d8f5 0%, #e8f0ff 100%);
-    box-shadow: 1px 1px 0 var(--xp-white), inset -1px -1px 0 #7f9db9;
-    transition: none;
-}
-
-button:hover:not(:disabled) {
-    border-color: #ff9900;
-    background: linear-gradient(to top, #fcf4c9 0%, #fae188 100%);
-}
-
-button:active:not(:disabled) {
-    background: linear-gradient(to bottom, #c7d8f5 0%, #e8f0ff 100%);
-    box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.2);
-    transform: translateY(1px);
-}
-
-button:disabled {
-    background-color: #f0f0f0;
-    color: #a0a0a0;
-    border-color: #c0c0c0;
-    box-shadow: none;
-    cursor: not-allowed;
-}
-
-#shuffleBtn.active {
-    background: linear-gradient(to bottom, #b4d187 0%, #dbe8c0 100%);
-    border-color: #008000;
-}
-
-#shuffleBtn.active:hover {
-    background: linear-gradient(to bottom, #dbe8c0 0%, #b4d187 100%);
-}
-
-/* --- Playlist --- */
+/* Sezione Playlist */
 #playlist-section {
-    flex-grow: 1;
-    /* Permette alla playlist di espandersi */
+    padding: 20px;
+    background: #e0e0e0;
+    border-radius: 15px;
+    box-shadow: inset 3px 3px 8px #bebebe, inset -3px -3px 8px #ffffff;
 }
 
 #playlist {
     list-style: none;
-    padding: 2px;
-    max-height: 250px;
-    /* Altezza regolata per il nuovo layout */
-    overflow-y: auto;
-    border: 1px solid #7f9db9;
-    background-color: var(--xp-white);
+    padding: 0;
 }
 
 #playlist li {
-    padding: 5px 10px;
-    border-bottom: 1px dotted #ccc;
+    padding: 10px;
+    margin-bottom: 5px;
+    background-color: #fff;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.9em;
-    transition: none;
-}
-
-#playlist li:last-child {
-    border-bottom: none;
+    transition: background-color 0.2s, color 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 #playlist li:hover {
-    background-color: var(--xp-button-hover);
+    background-color: #d1d1d1;
 }
 
 #playlist li.active {
-    background-color: var(--xp-button-active);
-    color: #000;
+    background-color: #007aff;
+    color: white;
     font-weight: bold;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* --- Status Messages --- */
-.status-message {
+/*
+ * STILI IPOD CLICK WHEEL E VOLUME
+ */
+
+#ipod-controls-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+/* Click Wheel */
+#click-wheel {
+    position: relative;
+    width: 200px;
+    /* Diametro della ruota */
+    height: 200px;
+    border-radius: 50%;
+    background-color: #cacaca;
+    /* Grigio chiaro per la ruota esterna */
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2) inset, -5px -5px 15px rgba(255, 255, 255, 0.9) inset;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.wheel-button {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #333;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.1s, background-color 0.1s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.wheel-button:hover {
+    color: #007aff;
+}
+
+.wheel-button:active {
+    color: white;
+    background-color: #666;
+}
+
+/* Posizionamento dei Bottoni */
+.wheel-button.shuffle {
+    top: 15px;
+}
+
+.wheel-button.menu {
+    bottom: 15px;
     font-size: 0.9em;
-    color: #555;
-    padding: 5px 0;
 }
 
-#aiStatus {
-    border-top: 1px solid #c8c8c8;
-    margin-top: 10px;
-    padding-top: 5px;
+.wheel-button.prev {
+    left: 15px;
+}
+
+.wheel-button.next {
+    right: 15px;
+}
+
+/* Tasto Centrale (Play/Pause/Seleziona) */
+#playPauseBtn {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: #fff;
+    /* Bianco per il centro */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: #007aff;
+    font-size: 1.5em;
+    transition: background-color 0.1s;
+}
+
+#playPauseBtn:hover {
+    background-color: #f0f0f0;
+}
+
+#playPauseBtn:active {
+    background-color: #d1d1d1;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Slider Volume Laterale */
+#volume-slider-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    height: 150px;
+    justify-content: center;
+    padding: 0 20px;
+    border-radius: 10px;
+    background: #e0e0e0;
+    box-shadow: inset 2px 2px 5px #bebebe, inset -2px -2px 5px #ffffff;
+}
+
+.volume-icon {
+    font-size: 1.2em;
+    color: #666;
+}
+
+#volumeSlider {
+    width: 100px;
+    height: 8px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    transform: rotate(270deg);
+    /* Ruota lo slider per farlo verticale */
+    margin: 40px 0;
+}
+
+#volumeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #007aff;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+#volumeSlider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #007aff;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Media Query per la Responsività */
+@media (max-width: 900px) {
+    #main-layout {
+        flex-direction: column;
+    }
+
+    #left-panel {
+        min-width: auto;
+    }
+
+    #player-main {
+        padding: 15px;
+    }
+
+    #ipod-controls-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    #volume-slider-wrapper {
+        flex-direction: row;
+        width: 80%;
+        height: auto;
+        padding: 10px;
+    }
+
+    #volumeSlider {
+        transform: none;
+        /* Rimuove la rotazione su schermi piccoli (slider orizzontale) */
+        width: 100%;
+        margin: 0 10px;
+    }
 }

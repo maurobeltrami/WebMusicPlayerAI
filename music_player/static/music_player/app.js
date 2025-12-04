@@ -6,21 +6,7 @@ let currentTrackIndex = 0;
 let fullLibrary = [];
 let isShuffling = false;
 let originalPlaylistOrder = [];
-
-// --- Variabili Visualizzatore ---
-let audioContext = null;
-let analyser;
-let source;
-let canvasContext;
-const canvas = document.getElementById('visualizer');
-const WIDTH = 400;
-const HEIGHT = 200;
-if (canvas) {
-    canvasContext = canvas.getContext('2d');
-}
-let currentVisualizerType = 'waveform';
-let frame = 0;
-let audioConnected = false;
+let isPlaying = false; // Stato di riproduzione
 
 // Elementi DOM
 const audioPlayer = document.getElementById('audioPlayer');
@@ -28,8 +14,9 @@ const playlistEl = document.getElementById('playlist');
 const currentTrackDisplay = document.getElementById('currentTrack');
 const nextBtn = document.getElementById('nextBtn');
 const prevBtn = document.getElementById('prevBtn');
+
+// Mantengo gli input AI, ma il bottone 'generatePlaylistBtn' verrà riutilizzato per il Mute.
 const aiPromptInput = document.getElementById('aiPrompt');
-const generatePlaylistBtn = document.getElementById('generatePlaylistBtn');
 const aiStatus = document.getElementById('aiStatus');
 
 const artistFilter = document.getElementById('artistFilter');
@@ -39,56 +26,193 @@ const filterStatus = document.getElementById('filterStatus');
 const shuffleBtn = document.getElementById('shuffleBtn');
 const visualizerSelector = document.getElementById('visualizerSelector');
 
+// Controlli iPod
+const playPauseBtn = document.getElementById('playPauseBtn');
+const playPauseIcon = document.getElementById('playPauseIcon');
+const volumeSlider = document.getElementById('volumeSlider');
+const progressBar = document.getElementById('progressBar');
+const timeDisplay = document.getElementById('time-display');
+
+// Contenitore cliccabile della barra di progresso (ASSICURARSI CHE QUESTO ID SIA NELL'HTML!)
+const progressControl = document.getElementById('progressControl');
+
+// Il vecchio generatePlaylistBtn è ora il Mute Toggle Button
+const muteToggleBtn = document.getElementById('generatePlaylistBtn');
+
+
 // URL Base del Backend Django
 const DJANGO_BASE_HOST = 'http://127.0.0.1:8000/'; // URL Base
 const DJANGO_API_BASE = DJANGO_BASE_HOST + 'api/';
 const DJANGO_MEDIA_PREFIX = 'media/'; // Prefisso Media di Django
 
+// --- Variabili Visualizzatore ---
+let audioContext = null;
+let analyser;
+let source;
+let canvasContext;
+const canvas = document.getElementById('visualizer');
+if (canvas) {
+    canvasContext = canvas.getContext('2d');
+    // Set iniziale della dimensione del canvas
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+}
+let currentVisualizerType = 'waveform';
+let frame = 0;
+let audioConnected = false;
+
+
+// --- UTILITY FUNZIONI ---
+
+const formatTime = (seconds) => {
+    if (isNaN(seconds) || seconds < 0) return '0:00';
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+};
+
+function resizeCanvas() {
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    // Imposta la dimensione del canvas per adattarsi al suo contenitore
+    canvas.width = container.clientWidth - 20; // -20 per padding
+    canvas.height = 200;
+}
+
+function updateProgressBar() {
+    const duration = audioPlayer.duration;
+    const currentTime = audioPlayer.currentTime;
+    if (isFinite(duration) && duration > 0) {
+        const percentage = (currentTime / duration) * 100;
+        progressBar.style.width = `${percentage}%`;
+        timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+    } else {
+        progressBar.style.width = '0%';
+        timeDisplay.textContent = '0:00 / 0:00';
+    }
+}
+
+// FUNZIONE SEEKING (Spostamento sulla barra)
+function seekTrack(e) {
+    if (!audioPlayer.src || !progressControl) return;
+
+    const controlRect = progressControl.getBoundingClientRect();
+
+    // Calcola la posizione X del click relativa al contenitore
+    const clickX = e.clientX - controlRect.left;
+    const barWidth = controlRect.width;
+
+    const percentage = clickX / barWidth;
+    const newTime = percentage * audioPlayer.duration;
+
+    if (isFinite(newTime)) {
+        audioPlayer.currentTime = newTime;
+    }
+}
+
+
+// FUNZIONE MUTE (Attiva/Disattiva Muto)
+function toggleMute() {
+    audioPlayer.muted = !audioPlayer.muted;
+
+    // Aggiorna l'icona del bottone Mute
+    if (audioPlayer.muted) {
+        // Salva l'ultimo volume non muto prima di silenziare
+        volumeSlider.dataset.lastVolume = audioPlayer.volume;
+
+        // Aggiorna il bottone
+        muteToggleBtn.innerHTML = '<i class="fas fa-volume-mute"></i> Mute ON';
+        muteToggleBtn.classList.add('active');
+
+    } else {
+        // Alza il volume ripristinando l'ultimo valore non muto
+        const lastVolume = parseFloat(volumeSlider.dataset.lastVolume) || 0.5;
+        audioPlayer.volume = lastVolume; // Ripristina il volume nel player
+        volumeSlider.value = lastVolume; // Aggiorna lo slider UI
+
+        // Aggiorna il bottone
+        muteToggleBtn.innerHTML = '<i class="fas fa-volume-up"></i> Mute OFF';
+        muteToggleBtn.classList.remove('active');
+    }
+}
+
 
 // --- FUNZIONI DI RIPRODUZIONE ---
 
-function loadTrack(index) {
+function togglePlayPause() {
     if (currentPlaylist.length === 0) return;
+
+    // Se il brano non è ancora caricato, carichiamo il primo e poi giochiamo
+    if (!audioPlayer.src) {
+        loadTrack(0);
+        return;
+    }
+
+    if (isPlaying) {
+        audioPlayer.pause();
+        isPlaying = false;
+        playPauseIcon.classList.replace('fa-pause', 'fa-play');
+    } else {
+        // La prima volta che si preme play, si inizializza l'AudioContext
+        setupVisualizer();
+
+        audioPlayer.play().then(() => {
+            isPlaying = true;
+            playPauseIcon.classList.replace('fa-play', 'fa-pause');
+        }).catch(e => {
+            console.error("Riproduzione fallita (forse problema URL o permessi):", e);
+            aiStatus.textContent = "Errore: Impossibile riprodurre il brano. Controlla la console.";
+        });
+    }
+}
+
+function loadTrack(index) {
+    if (currentPlaylist.length === 0) {
+        currentTrackDisplay.textContent = 'Nessun brano in playlist.';
+        audioPlayer.src = '';
+        isPlaying = false;
+        playPauseIcon.classList.replace('fa-pause', 'fa-play');
+        return;
+    }
 
     currentTrackIndex = (index + currentPlaylist.length) % currentPlaylist.length;
     const track = currentPlaylist[currentTrackIndex];
 
     let relativeUrl = track.url;
 
-    // ⬅️ CORREZIONE CRITICA: PULIZIA E REINDIRIZZAMENTO VERSO /media/
-
-    // 1. Rimuove tutti i prefissi non necessari in un colpo solo
-    // (es. "/api/music_stream/brano.mp3" -> "brano.mp3")
+    // Logica di pulizia e reindirizzamento
     relativeUrl = relativeUrl.replace(/^\/api\/music_stream\//, '');
     relativeUrl = relativeUrl.replace(/^\/api\//, '');
     relativeUrl = relativeUrl.replace(/^music_stream\//, '');
-    relativeUrl = relativeUrl.replace(/^\//, ''); // Rimuove eventuali slash iniziali rimanenti
+    relativeUrl = relativeUrl.replace(/^\//, '');
 
-    // 2. Codifica il percorso rimanente
     const encodedFilepath = encodeURIComponent(relativeUrl);
+    const finalSrc = DJANGO_BASE_HOST + DJANGO_MEDIA_PREFIX + encodedFilepath;
 
-    // 3. Costruisce l'SRC finale corretto: http://127.0.0.1:8000/media/NomeFile.mp3
-    audioPlayer.src = DJANGO_BASE_HOST + DJANGO_MEDIA_PREFIX + encodedFilepath;
+    // Controlla se l'SRC è cambiato, altrimenti evita di ricaricare il brano se si preme Prev/Next velocemente
+    if (audioPlayer.src !== finalSrc) {
+        audioPlayer.src = finalSrc;
+        console.log("SRC Caricato:", finalSrc);
+    }
 
-    console.log("SRC Caricato (VERIFICA QUESTO):", audioPlayer.src);
 
     currentTrackDisplay.textContent = `${track.title} - ${track.artist} (${track.album})`;
 
     updatePlaylistView();
 
-    // Tentiamo il play (gestione DOMException per riproduzione automatica bloccata dal browser)
-    audioPlayer.play().catch(e => {
-        // Ignora i permessi negati, ma logga altri errori (es. 404).
-        if (e.name !== "NotAllowedError" && e.name !== "AbortError") {
-            console.error("Errore di riproduzione. Controlla il log Network per 404/file non idoneo.", e);
-        } else {
-            console.warn("Riproduzione automatica bloccata dal browser. Clicca play.", e);
-        }
-    });
-
-    // Riconnessione Visualizzatore
-    if (audioContext && !audioConnected) {
-        setupVisualizer();
+    // Riprova il play (fondamentale per next/prev)
+    if (isPlaying || index === 0) { // Se è in riproduzione o è il primo brano (tentativo play)
+        audioPlayer.play().catch(e => {
+            if (e.name !== "NotAllowedError" && e.name !== "AbortError") {
+                console.error("Errore di riproduzione:", e);
+            } else {
+                console.warn("Riproduzione bloccata dal browser. Clicca play.");
+            }
+            isPlaying = false;
+            playPauseIcon.classList.replace('fa-pause', 'fa-play');
+        });
+        isPlaying = true;
+        playPauseIcon.classList.replace('fa-play', 'fa-pause');
     }
 }
 
@@ -102,7 +226,10 @@ function updatePlaylistView() {
 
         if (index === currentTrackIndex) {
             li.classList.add('active');
-            li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Scrolla solo se il player è attivo (per evitare scroll a vuoto all'inizializzazione)
+            if (currentTrackIndex > 0) {
+                li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         }
 
         li.addEventListener('click', () => loadTrack(index));
@@ -113,14 +240,11 @@ function updatePlaylistView() {
     nextBtn.disabled = !hasTracks;
     prevBtn.disabled = !hasTracks;
 
-    if (isShuffling) {
-        shuffleBtn.classList.add('active');
-        shuffleBtn.textContent = '🔀 Shuffle ON';
-    } else {
-        shuffleBtn.classList.remove('active');
-        shuffleBtn.textContent = 'Shuffle OFF';
-    }
+    // Aggiorna lo stato dello shuffle sul bottone
+    shuffleBtn.classList.toggle('active', isShuffling);
+    shuffleBtn.innerHTML = isShuffling ? '<i class="fas fa-random"></i> Shuffle ON' : '<i class="fas fa-random"></i> Shuffle OFF';
 }
+
 
 // --- LOGICA SHUFFLE ---
 function shuffleArray(array) {
@@ -134,18 +258,23 @@ function shuffleArray(array) {
 function toggleShuffle() {
     isShuffling = !isShuffling;
 
-    const currentTrack = currentPlaylist[currentTrackIndex];
+    const currentTrack = currentPlaylist.length > 0 ? currentPlaylist[currentTrackIndex] : null;
 
     if (isShuffling) {
+        // Salva l'ordine attuale prima di rimescolare
         originalPlaylistOrder = [...currentPlaylist];
-        currentPlaylist = shuffleArray(currentPlaylist);
+        currentPlaylist = shuffleArray([...currentPlaylist]); // Mescola una copia
     } else {
+        // Ripristina l'ordine originale
         currentPlaylist = [...originalPlaylistOrder];
     }
 
-    currentTrackIndex = currentPlaylist.findIndex(t => t.id === currentTrack.id);
-
-    if (currentTrackIndex === -1) currentTrackIndex = 0;
+    if (currentTrack) {
+        // Trova l'indice del brano corrente nel nuovo/vecchio ordine
+        currentTrackIndex = currentPlaylist.findIndex(t => t.id === currentTrack.id);
+    } else {
+        currentTrackIndex = 0;
+    }
 
     updatePlaylistView();
 }
@@ -159,24 +288,26 @@ function setupVisualizer() {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioContext.createAnalyser();
             analyser.smoothingTimeConstant = 0.8;
-
-            // Crea il source solo la prima volta
             source = audioContext.createMediaElementSource(audioPlayer);
             audioConnected = false;
 
+            // Inizia il loop di disegno
             drawVisualizer();
 
         } catch (e) {
             console.error("Web Audio API non supportata o errore di inizializzazione:", e);
+            return;
         }
     }
 
+    // Connetti se non è già connesso
     if (audioContext && !audioConnected) {
         try {
             source.connect(analyser);
             analyser.connect(audioContext.destination);
             audioConnected = true;
 
+            // Riprendi se sospeso (necessario dopo l'interazione utente)
             if (audioContext.state === 'suspended') {
                 audioContext.resume();
             }
@@ -207,38 +338,49 @@ function setAnalyserFFTSize(visualizerType) {
 }
 
 function drawVisualizer() {
-    if (!analyser || !canvasContext) {
-        requestAnimationFrame(drawVisualizer);
+    requestAnimationFrame(drawVisualizer);
+    if (!analyser || !canvasContext || !canvas) return;
+
+    // Non disegnare se l'audio non è connesso o in pausa
+    if (!audioConnected || audioPlayer.paused) {
+        // Disegna uno sfondo scuro statico
+        canvasContext.fillStyle = 'rgb(26, 26, 26)';
+        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
         return;
     }
 
-    requestAnimationFrame(drawVisualizer);
     frame++;
 
-    canvasContext.clearRect(0, 0, WIDTH, HEIGHT);
+    // Pulisce solo se ci sono effetti di scia (come in waveform/circles)
+    if (currentVisualizerType === 'waveform' || currentVisualizerType === 'circles') {
+        canvasContext.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+        canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Aggiorna le dimensioni se necessario (gestito da resizeCanvas, ma utile qui)
+    const currentWidth = canvas.width;
+    const currentHeight = canvas.height;
+
 
     switch (currentVisualizerType) {
         case 'waveform':
-            drawWaveform();
+            drawWaveform(currentWidth, currentHeight);
             break;
         case 'bars':
-            drawBars();
+            drawBars(currentWidth, currentHeight);
             break;
         case 'circles':
-            drawCircles();
+            drawCircles(currentWidth, currentHeight);
             break;
-        default:
-            drawWaveform();
     }
 }
 
-function drawWaveform() {
+function drawWaveform(WIDTH, HEIGHT) {
     const bufferLength = analyser.fftSize;
     const dataArray = new Uint8Array(bufferLength);
     analyser.getByteTimeDomainData(dataArray);
-
-    canvasContext.fillStyle = 'rgba(0, 0, 0, 0.05)';
-    canvasContext.fillRect(0, 0, WIDTH, HEIGHT);
 
     canvasContext.lineWidth = 2;
     canvasContext.strokeStyle = `hsl(${frame * 0.8 % 360}, 100%, 50%)`;
@@ -269,7 +411,7 @@ function drawWaveform() {
     canvasContext.shadowBlur = 0;
 }
 
-function drawBars() {
+function drawBars(WIDTH, HEIGHT) {
     analyser.fftSize = 256;
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
@@ -293,7 +435,7 @@ function drawBars() {
     }
 }
 
-function drawCircles() {
+function drawCircles(WIDTH, HEIGHT) {
     analyser.fftSize = 512;
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
@@ -326,11 +468,33 @@ function drawCircles() {
     canvasContext.shadowBlur = 0;
 }
 
-// --- GESTIONE EVENTI PLAYER (AGGIORNATA) ---
+// --- GESTIONE EVENTI PLAYER (DEFINITIVA) ---
 
+playPauseBtn.addEventListener('click', togglePlayPause);
 nextBtn.addEventListener('click', () => loadTrack(currentTrackIndex + 1));
 prevBtn.addEventListener('click', () => loadTrack(currentTrackIndex - 1));
+
 shuffleBtn.addEventListener('click', toggleShuffle);
+
+// CORREZIONE VOLUME: Lo slider controlla direttamente la proprietà volume (0.0 a 1.0)
+volumeSlider.addEventListener('input', (event) => {
+    // Usa il valore dello slider direttamente come volume (assume che l'input range sia tra 0 e 1 o sia normalizzato)
+    const newVolume = parseFloat(event.target.value);
+    audioPlayer.volume = newVolume;
+
+    // Se l'utente sposta lo slider sopra 0 mentre è muto, disattiva il muto
+    if (audioPlayer.muted && newVolume > 0) {
+        audioPlayer.muted = false;
+        muteToggleBtn.innerHTML = '<i class="fas fa-volume-up"></i> Mute OFF';
+        muteToggleBtn.classList.remove('active');
+    }
+
+    // Se l'utente sposta lo slider a 0, non lo forziamo a muto, ma aggiorniamo il 'lastVolume'
+    if (newVolume > 0) {
+        volumeSlider.dataset.lastVolume = newVolume;
+    }
+});
+
 
 visualizerSelector.addEventListener('change', (event) => {
     currentVisualizerType = event.target.value;
@@ -342,8 +506,16 @@ audioPlayer.addEventListener('ended', () => {
     loadTrack(nextIndex);
 });
 
-// Chiamiamo setupVisualizer al primo evento 'play' causato da un'interazione utente
-audioPlayer.addEventListener('play', setupVisualizer, { once: true });
+audioPlayer.addEventListener('timeupdate', updateProgressBar);
+audioPlayer.addEventListener('loadedmetadata', updateProgressBar); // Aggiorna i tempi quando i metadati sono caricati
+
+// Evento: Seeking sulla barra di controllo
+if (progressControl) {
+    progressControl.addEventListener('click', seekTrack);
+}
+
+// Evento: Bottone Mute (generatePlaylistBtn ora è muteToggleBtn)
+muteToggleBtn.addEventListener('click', toggleMute);
 
 
 // --- FUNZIONI API ---
@@ -371,6 +543,9 @@ async function fetchTracks(endpoint = 'tracks/', method = 'GET', body = null) {
 // --- LOGICA FILTRI E INIZIALIZZAZIONE ---
 
 function populateFilters(filters) {
+    artistFilter.innerHTML = '<option value="all">Tutti</option>';
+    albumFilter.innerHTML = '<option value="all">Tutti</option>';
+
     filters.artists.forEach(artist => {
         const option = new Option(artist, artist);
         artistFilter.add(option);
@@ -397,6 +572,9 @@ function applyFilters() {
         currentPlaylist = [];
         audioPlayer.pause();
         audioPlayer.src = '';
+        isPlaying = false;
+        playPauseIcon.classList.replace('fa-pause', 'fa-play');
+        currentTrackDisplay.textContent = 'Nessun brano in riproduzione.';
     } else {
         filterStatus.textContent = `Trovati ${filteredTracks.length} brani.`;
         currentPlaylist = filteredTracks;
@@ -405,12 +583,11 @@ function applyFilters() {
     isShuffling = false;
     originalPlaylistOrder = [...currentPlaylist];
 
-    // Se ci sono brani, pre-imposta l'SRC del primo brano, ma NON chiamare loadTrack() per evitare il play automatico
     currentTrackIndex = 0;
 
     if (currentPlaylist.length > 0) {
         const track = currentPlaylist[0];
-        // Costruzione dell'SRC per l'elemento audio (ripetiamo la logica di pulizia)
+        // Costruzione dell'SRC per l'elemento audio (logica di pulizia replicata)
         let relativeUrl = track.url;
         relativeUrl = relativeUrl.replace(/^\/api\/music_stream\//, '');
         relativeUrl = relativeUrl.replace(/^\/api\//, '');
@@ -421,7 +598,9 @@ function applyFilters() {
 
         audioPlayer.src = DJANGO_BASE_HOST + DJANGO_MEDIA_PREFIX + encodedFilepath;
         currentTrackDisplay.textContent = `${track.title} - ${track.artist} (${track.album})`;
-        // audioPlayer.load(); // Opzionale: pre-carica i metadati
+        // Forza il ripristino dell'icona play quando cambiano i filtri
+        isPlaying = false;
+        playPauseIcon.classList.replace('fa-pause', 'fa-play');
     } else {
         currentTrackDisplay.textContent = 'Seleziona un brano dalla playlist.';
         audioPlayer.src = '';
@@ -444,6 +623,15 @@ async function initializePlayer() {
         const filters = await fetchTracks('filters/');
         populateFilters(filters);
 
+        // Imposta il volume iniziale e lo stato del mute
+        // ASSUME CHE L'INPUT RANGE HTML ABBIA MIN=0 E MAX=1
+        audioPlayer.volume = volumeSlider.value;
+        volumeSlider.dataset.lastVolume = volumeSlider.value; // Salva il valore iniziale non muto
+
+        // Imposta il bottone Mute sullo stato iniziale (NON muto)
+        muteToggleBtn.innerHTML = '<i class="fas fa-volume-up"></i> Mute OFF';
+        muteToggleBtn.classList.remove('active');
+
         // Chiama applyFilters per impostare l'SRC iniziale senza tentare il play
         applyFilters();
 
@@ -452,21 +640,5 @@ async function initializePlayer() {
     }
     updatePlaylistView();
 }
-
-// --- LOGICA AI (Placeholder) ---
-
-generatePlaylistBtn.addEventListener('click', async () => {
-    const prompt = aiPromptInput.value.trim();
-    if (!prompt) return;
-
-    aiStatus.textContent = "Generazione playlist in corso...";
-    generatePlaylistBtn.disabled = true;
-
-    // SIMULAZIONE
-    setTimeout(() => {
-        aiStatus.textContent = `[SIMULAZIONE] Richiesta ricevuta: "${prompt}". Implementare l'AI nel Backend.`;
-        generatePlaylistBtn.disabled = false;
-    }, 1500);
-});
 
 document.addEventListener('DOMContentLoaded', initializePlayer);
