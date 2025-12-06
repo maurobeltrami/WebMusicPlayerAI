@@ -1,5 +1,3 @@
-// music_player/static/music_player/app.js (VERSIONE AGGIORNATA)
-
 // Variabili globali
 let currentPlaylist = [];
 let currentTrackIndex = 0;
@@ -19,6 +17,9 @@ const prevBtn = document.getElementById('prevBtn');
 const artistFilter = document.getElementById('artistFilter');
 const albumFilter = document.getElementById('albumFilter');
 const filterStatus = document.getElementById('filterStatus');
+
+// Nuovi elementi per la ricerca
+const searchTrackInput = document.getElementById('searchTrackInput'); // *** NUOVO ELEMENTO DOM ***
 
 // Controlli iPod
 const shuffleBtn = document.getElementById('shuffleBtn');
@@ -156,7 +157,7 @@ function toggleMute() {
 
 // --- FUNZIONI DI RIPRODUZIONE ---
 
-function togglePlayPause() {
+async function togglePlayPause() {
     if (currentPlaylist.length === 0) {
         aiStatus.textContent = "Carica una playlist per iniziare.";
         return;
@@ -169,7 +170,7 @@ function togglePlayPause() {
     }
 
     // Assicurati che l'AudioContext sia pronto prima di riprodurre
-    setupVisualizer();
+    await setupVisualizer(); // Attendiamo che l'inizializzazione sia completa
 
     if (isPlaying) {
         audioPlayer.pause();
@@ -178,7 +179,16 @@ function togglePlayPause() {
     } else {
         // Riprendi l'AudioContext se sospeso dal browser
         if (audioContext && audioContext.state === 'suspended') {
-            audioContext.resume();
+            try {
+                // *** CRUCIALE: Attendiamo la ripresa per la stabilità USB ***
+                await audioContext.resume();
+                console.log("AudioContext ripreso con successo.");
+            } catch (err) {
+                console.error("Errore nel riprendere l'AudioContext:", err);
+                // Se non riusciamo a riprendere, non tentiamo il play
+                aiStatus.textContent = "Errore Audio: Impossibile riattivare il contesto.";
+                return;
+            }
         }
 
         audioPlayer.play().then(() => {
@@ -227,19 +237,9 @@ function loadTrack(index) {
 
     // Tenta il play se era in riproduzione o se è il primo brano
     if (isPlaying || index === 0) {
-        // Assicurati che il visualizzatore sia inizializzato prima di provare a riprodurre
+        // Non chiamiamo togglePlayPause direttamente qui, ma aspettiamo il loadeddata
+        // per avviare la riproduzione. Chiamiamo setupVisualizer in modo preventivo.
         setupVisualizer();
-
-        audioPlayer.play().then(() => {
-            isPlaying = true;
-            playPauseIcon.classList.replace('fa-play', 'fa-pause');
-        }).catch(e => {
-            if (e.name !== "NotAllowedError" && e.name !== "AbortError") {
-                console.error("Errore di riproduzione:", e);
-            }
-            isPlaying = false;
-            playPauseIcon.classList.replace('fa-pause', 'fa-play');
-        });
     }
 }
 
@@ -262,7 +262,11 @@ function updatePlaylistView() {
             }
         }
 
-        li.addEventListener('click', () => loadTrack(index));
+        li.addEventListener('click', async () => {
+            loadTrack(index);
+            // Dopo aver caricato, assicuriamoci di riprodurre
+            if (!isPlaying) await togglePlayPause();
+        });
         playlistEl.appendChild(li);
     });
 
@@ -313,10 +317,13 @@ function toggleShuffle() {
 
 // --- LOGICA VISUALIZZATORE (MULTIPLA) ---
 
-function setupVisualizer() {
+async function setupVisualizer() {
     if (audioContext === null) {
         try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // *** MODIFICA CHIAVE: Latenza impostata su 'playback' per maggiore stabilità DAC ***
+            audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                latencyHint: 'playback',
+            });
             analyser = audioContext.createAnalyser();
             analyser.smoothingTimeConstant = 0.8;
 
@@ -333,13 +340,18 @@ function setupVisualizer() {
 
         } catch (e) {
             console.error("Web Audio API non supportata o errore di inizializzazione:", e);
-            // Non terminare la funzione, ma non riprendere l'AudioContext se fallisce
+            aiStatus.textContent = "Errore Audio: Contesto non inizializzato.";
             return;
         }
     }
     // Riprendi se sospeso (necessario dopo l'interazione utente)
     if (audioContext && audioContext.state === 'suspended') {
-        audioContext.resume().catch(err => console.error("Errore nel riprendere l'AudioContext:", err));
+        try {
+            // Tentativo di ripresa
+            await audioContext.resume();
+        } catch (err) {
+            console.error("Errore nel riprendere l'AudioContext:", err);
+        }
     }
     setAnalyserFFTSize(currentVisualizerType);
 }
@@ -624,11 +636,24 @@ function populateFilters(filters) {
 function applyFilters() {
     const selectedArtist = artistFilter.value;
     const selectedAlbum = albumFilter.value;
+    // Ottiene il termine di ricerca (se l'elemento esiste) e lo normalizza
+    const searchTerm = (searchTrackInput ? searchTrackInput.value : '').toLowerCase().trim(); // *** NUOVA LOGICA DI RICERCA ***
+
 
     let filteredTracks = fullLibrary.filter(track => {
         const matchArtist = selectedArtist === 'all' || track.artist === selectedArtist;
         const matchAlbum = selectedAlbum === 'all' || track.album === selectedAlbum;
-        return matchArtist && matchAlbum;
+
+        // Filtra in base al termine di ricerca (su titolo, artista o album)
+        let matchSearch = true;
+        if (searchTerm.length > 0) {
+            matchSearch = track.title.toLowerCase().includes(searchTerm) ||
+                track.artist.toLowerCase().includes(searchTerm) ||
+                track.album.toLowerCase().includes(searchTerm);
+        }
+
+        // Unisce tutti i filtri
+        return matchArtist && matchAlbum && matchSearch;
     });
 
     if (filteredTracks.length === 0) {
@@ -673,6 +698,11 @@ function applyFilters() {
 artistFilter.addEventListener('change', applyFilters);
 albumFilter.addEventListener('change', applyFilters);
 
+// *** NUOVO LISTENER: Lancia applyFilters ad ogni input nel campo di ricerca ***
+if (searchTrackInput) {
+    searchTrackInput.addEventListener('input', applyFilters);
+}
+
 async function initializePlayer() {
     // Tenta di caricare le tracce dall'API
     let tracks = await fetchTracks('tracks/');
@@ -710,8 +740,8 @@ async function initializePlayer() {
     }
 
     updatePlaylistView();
-    // Inizializza il visualizzatore al caricamento, ma non avviare il loop di disegno finché l'utente non interagisce
-    setupVisualizer();
+    // Inizializza il contesto audio con l'hint di latenza
+    await setupVisualizer();
 }
 
 document.addEventListener('DOMContentLoaded', initializePlayer);
