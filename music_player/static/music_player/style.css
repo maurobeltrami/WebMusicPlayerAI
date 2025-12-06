@@ -1,28 +1,4 @@
-/* --- Stili Personalizzati per il Vertical Slider e l'Ipod Style --- */
-
-.vertical-slider {
-    -webkit-appearance: none;
-    width: 8px;
-    /* Larghezza del thumb */
-    height: 100%;
-    background: transparent;
-    position: absolute;
-    top: 0;
-    margin: 0;
-}
-
-.vertical-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    height: 12px;
-    width: 12px;
-    border-radius: 50%;
-    background: #4A90E2;
-    /* Blu per il volume */
-    cursor: pointer;
-    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-    margin-top: -2px;
-    /* Centra visivamente */
-}
+/* --- Stili Personalizzati per l'Ipod Style --- */
 
 /* Aggiustamento per il layout iPod */
 #shuffleBtn.active {
@@ -52,31 +28,67 @@
 
 /* Rotazione dello slider per farlo sembrare verticale */
 #volumeSlider {
+    -webkit-appearance: none;
+    /* Rimuove lo stile di default di Chrome/Safari */
     appearance: none;
+
+    /* Larghezza e altezza dello slider quando NON è ruotato */
     width: 100px;
+    /* Lunghezza (Verticale) */
     height: 8px;
+    /* Spessore (Orizzontale) */
+
     margin: 0;
-    transform: rotate(-90deg) translateX(-46px);
-    /* 90 gradi e traslazione per centrare */
-    transform-origin: center;
+
+    /* Posizionamento rispetto al contenitore w-8 h-32 */
     position: absolute;
     top: 50%;
+    /* Fissa il punto di partenza al centro verticale del genitore */
     left: 50%;
+    /* Fissa il punto di partenza al centro orizzontale del genitore */
+
+    /* Per centrare perfettamente:
+       1. Ruota di -90 gradi.
+       2. Sposta lungo l'asse X della metà della sua larghezza (100px * -0.5 = -50px).
+       3. Sposta lungo l'asse Y della metà della sua altezza (8px * -0.5 = -4px, ma è già gestito dalla rotazione implicita).
+       
+       Utilizziamo -50% della lunghezza dello slider (100px) sulla X, che è l'asse Y dopo la rotazione.
+    */
+    transform: translate(-50%, -50%) rotate(-90deg);
+
+    /* Disegno il canale interno dello slider */
     background: #4B5563;
     /* Grigio scuro per la traccia */
     border-radius: 4px;
+    cursor: pointer;
+    z-index: 10;
+    /* Assicura che sia cliccabile */
 }
 
 #volumeSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     background: #34D399;
     /* Verde chiaro */
     cursor: pointer;
     border-radius: 50%;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Stile per il pulsante Mute (altoparlante) */
+#muteToggleBtn {
+    /* Posiziona l'altoparlante sotto la barra verticale */
+    position: absolute;
+    /* Già specificato in HTML, ma meglio ribadirlo */
+    bottom: -8px;
+    /* Spostalo sotto il fondo del contenitore */
+    left: 50%;
+    /* Allinealo al centro orizzontale del contenitore */
+    transform: translateX(-50%);
+    /* Centra l'elemento stesso orizzontalmente */
+    transition: color 0.15s;
 }
 
 /* Se il volume è muto o disabilitato, usiamo un colore diverso per il thumb */
