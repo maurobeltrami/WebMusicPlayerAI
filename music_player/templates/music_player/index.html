@@ -5,24 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Web Music Player AI</title>
     
-    <!-- Tailwind CSS (per utilità di base) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Font Awesome per le icone -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <!-- Font Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- INCLUSIONE DEL FILE CSS ESTERNO -->
     <link rel="stylesheet" href="{% static 'music_player/style.css' %}">
+
+    <style>
+        /* Rende il cursore standard ma visivamente meno invadente */
+        #progressControl {
+            cursor: pointer;
+        }
+
+        /* NASCONDE IL PALLINO DI TRASCINAMENTO SULLA BARRA DI PROGRESSO. */
+        .progress-thumb {
+            display: none !important; 
+        }
+
+        /* Nuova classe per la divisione in due metà (solo layout, non logica) */
+        .progress-control-wrapper {
+            position: relative;
+        }
+        .progress-control-wrapper::before, .progress-control-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50%; /* Metà larghezza */
+            pointer-events: none; /* Assicura che non interferisca con il clic sulla barra */
+        }
+        .progress-control-wrapper::before {
+            left: 0;
+        }
+        .progress-control-wrapper::after {
+            right: 0;
+        }
+    </style>
+
 </head>
 <body class="bg-gray-50 min-h-screen p-4 flex items-start justify-center font-sans">
 
-    <!-- Contenitore Principale (IPOD) -->
     <div class="max-w-4xl w-full bg-white shadow-2xl rounded-3xl p-6 lg:p-8 transform transition-all duration-300 border-4 border-gray-300">
         
-        <!-- HEADER e Controlli Globali -->
         <header class="mb-6 flex justify-between items-center border-b pb-4">
             <h1 class="text-3xl font-bold text-gray-800">Mauro Music</h1>
             <div class="text-sm font-medium text-gray-500" id="aiStatus">Caricamento...</div>
@@ -30,30 +56,23 @@
 
         <main class="grid lg:grid-cols-3 gap-8">
             
-            <!-- COLONNA FILTRI e AI (Libreria) -->
             <aside class="lg:col-span-1 p-4 bg-gray-100 rounded-xl shadow-inner h-fit">
                 <h2 class="text-xl font-semibold mb-4 text-gray-700">Libreria & Filtri</h2>
 
-                <!-- NUOVO: Banner di Ricerca (Search Input) -->
                 <div class="mb-6 p-3 bg-white rounded-xl shadow border border-gray-200">
                     <label for="searchTrackInput" class="block text-sm font-medium text-gray-700 mb-1">Cerca Traccia (Titolo, Artista, Album)</label>
                     <div class="relative">
                         <input type="text" id="searchTrackInput" placeholder="Digita qui per filtrare..."
                                class="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
                                aria-label="Cerca Traccia">
-                        <!-- Icona di ricerca -->
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"></i>
                     </div>
                 </div>
-                <!-- FINE Banner di Ricerca -->
-
-                <!-- Filtro Artista -->
                 <div class="mb-4">
                     <label for="artistFilter" class="block text-sm font-medium text-gray-600 mb-1">Filtra per Artista:</label>
                     <select id="artistFilter" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"></select>
                 </div>
 
-                <!-- Filtro Album -->
                 <div class="mb-4">
                     <label for="albumFilter" class="block text-sm font-medium text-gray-600 mb-1">Filtra per Album:</label>
                     <select id="albumFilter" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"></select>
@@ -72,29 +91,28 @@
                 </button>
             </aside>
             
-            <!-- COLONNA PLAYER e VISUALIZZATORE (IPOD Screen) -->
             <section class="lg:col-span-2 p-4 bg-gray-200 rounded-xl shadow-lg flex flex-col items-center justify-between">
                 
-                <!-- Schermo Display (Visualizer) -->
                 <div id="displayScreen" class="w-full p-2 bg-gray-700 rounded-xl shadow-2xl mb-6 flex flex-col items-center justify-center border-4 border-gray-800" style="height: 250px;">
                     <p id="currentTrack" class="text-center text-sm font-medium text-white mb-2">Seleziona un brano dalla playlist.</p>
                     
-                    <!-- Progress Bar e Time Display -->
                     <div class="w-full flex justify-between items-center px-4 mb-2">
-                        <div id="progressControl" class="w-full h-1 bg-gray-500 rounded-full cursor-pointer relative group">
+                        
+                        <div id="progressControl" 
+                             class="progress-control-wrapper w-full h-1 bg-gray-500 rounded-full cursor-pointer relative group">
+                            
                             <div id="progressBar" class="h-1 bg-green-400 rounded-full transition-all duration-100 ease-linear" style="width: 0%;"></div>
-                            <!-- Punto di trascinamento (solo visivo) -->
-                            <div class="absolute h-3 w-3 bg-white border border-gray-400 rounded-full top-1/2 -translate-y-1/2 -translate-x-1/2 left-[var(--progress-percent)] opacity-0 group-hover:opacity-100 transition-opacity duration-150" style="--progress-percent: 0%;"></div>
+                            
+                            <div class="progress-thumb absolute h-3 w-3 bg-white border border-gray-400 rounded-full top-1/2 -translate-y-1/2 -translate-x-1/2 left-[var(--progress-percent)]" style="--progress-percent: 0%;"></div>
+
                         </div>
                     </div>
                     <div id="time-display" class="text-xs font-mono text-gray-400">0:00 / 0:00</div>
                     
-                    <!-- Canvas Visualizzatore -->
                     <div id="visualizerContainer" class="w-full h-40 mt-3 rounded-lg overflow-hidden border border-gray-600">
                         <canvas id="visualizer" class="block"></canvas>
                     </div>
 
-                    <!-- Selettore Visualizzatore -->
                     <div class="mt-2 w-full flex justify-center">
                          <select id="visualizerSelector" class="p-1 text-xs bg-gray-600 text-white rounded-md border-none focus:ring-0">
                             <option value="waveform">Forma d'Onda (Waveform)</option>
@@ -105,73 +123,53 @@
 
                 </div>
 
-                <!-- Controlli Riproduzione (Ipod Wheel Style) -->
                 <div class="flex items-center justify-center w-full mt-4">
-                    
-                    <!-- Volume Control (Colonna Verticale) -->
-                    <!-- Contenitore Volume: Rimosso <span class="text-xs text-gray-600 font-bold mb-1">Volume</span> -->
                     <div class="flex flex-col items-center justify-center mr-8 relative w-8 h-32">
-                        <!-- Slider: usa il CSS per la traccia visibile -->
                         <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.75" class="rounded-full absolute">
-                        <!-- Pulsante Mute: centrato verticalmente nel contenitore per allinearsi alla barra -->
-                        <!-- Ho aggiornato la classe in CSS per il centraggio preciso, qui rimuovo solo 'bottom-3' -->
                         <button id="muteToggleBtn" class="text-gray-700 hover:text-red-500 transition duration-150 absolute">
                             <i class="fas fa-volume-up"></i>
                         </button>
                     </div>
 
-                    <!-- Click Wheel (Cerchio di Comandi) -->
                     <div class="relative w-48 h-48 bg-gray-300 rounded-full shadow-2xl flex items-center justify-center">
-                        <!-- Cerchio Esterno (Navigazione) -->
                         <div class="absolute w-48 h-48 bg-gray-200 rounded-full flex items-center justify-center">
                             
-                            <!-- Prev/Skip Back (Sinistra) -->
                             <button id="prevBtn" class="absolute left-0 w-16 h-16 flex items-center justify-center -translate-x-1/2 text-gray-700 hover:text-blue-500 transition duration-150">
                                 <i class="fas fa-backward fa-xl"></i>
                             </button>
                             
-                            <!-- Next/Skip Forward (Destra) -->
-                            <button id="nextBtn" class="absolute right-0 w-16 h-16 flex items-center justify-center translate-x-1/2 text-gray-700 hover:text-blue-500 transition duration-150">
+                            <button id="nextBtn" class="absolute right-0 w-16 h-16 flex items-center justify-center translate-x/2 text-gray-700 hover:text-blue-500 transition duration-150">
                                 <i class="fas fa-forward fa-xl"></i>
                             </button>
                             
-                            <!-- Shuffle (Alto) -->
                             <button id="shuffleBtn" class="absolute top-0 w-16 h-16 flex items-center justify-center -translate-y-1/2 text-gray-700 hover:text-purple-500 transition duration-150">
                                 <i class="fas fa-random fa-xl"></i>
                             </button>
                             
-                            <!-- Playlist/Menu (Basso) - Re-funzionalizzato come un menu/dettagli -->
                             <button id="menuBtn" class="absolute bottom-0 w-16 h-16 flex items-center justify-center translate-y-1/2 text-gray-700 hover:text-green-500 transition duration-150" title="Placeholder per Menu/Dettagli">
                                 <i class="fas fa-list fa-xl"></i> 
                             </button>
                         </div>
 
-                        <!-- Cerchio Interno (Play/Pause/Seleziona) -->
-                        <!-- Aggiunto z-10 per assicurare che il pulsante centrale sia in primo piano -->
                         <button id="playPauseBtn" class="w-20 h-20 bg-gray-500 rounded-full shadow-inner flex items-center justify-center text-white hover:bg-gray-600 transition duration-150 z-10">
-                            <!-- Tasto Play/Pause (Icona iniziale PLAY) -->
                             <i id="playPauseIcon" class="fas fa-play fa-2xl"></i> 
                         </button>
                     </div>
                 </div>
 
-                <!-- Audio Player (Nascosto) -->
                 <audio id="audioPlayer" class="hidden"></audio>
             </section>
         </main>
 
-        <!-- Sezione Playlist Corrente -->
         <section class="mt-8">
             <h2 class="text-xl font-semibold mb-4 text-gray-700">Playlist Corrente</h2>
             <ul id="playlist" class="space-y-2 max-h-72 overflow-y-auto pr-2 bg-gray-100 p-3 rounded-xl">
-                <!-- I brani della playlist verranno iniettati qui da app.js -->
-            </ul>
+                </ul>
         </section>
 
     </div>
     
 
-    <!-- Script Logica del Player -->
     <script type="module" src="{% static 'music_player/app.js' %}"></script>
 </body>
 </html>

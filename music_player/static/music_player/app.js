@@ -6,6 +6,13 @@ let isShuffling = false;
 let originalPlaylistOrder = [];
 let isPlaying = false; // Stato di riproduzione
 
+// --- VARIABILI CHIAVE PER GESTIRE CLICK/DBLCLICK E REPLAY ---
+let isDblClicking = false; // Flag utilizzato per distinguere click singolo da doppio
+let clickTimer = null; // Timer per ritardare l'azione di seeking
+const DBL_CLICK_DELAY = 300; // 300ms, il ritardo massimo per un doppio click
+// -----------------------------------------------------------
+
+
 // Elementi DOM
 const audioPlayer = document.getElementById('audioPlayer');
 const playlistEl = document.getElementById('playlist');
@@ -19,11 +26,11 @@ const albumFilter = document.getElementById('albumFilter');
 const filterStatus = document.getElementById('filterStatus');
 
 // Nuovi elementi per la ricerca
-const searchTrackInput = document.getElementById('searchTrackInput'); // *** NUOVO ELEMENTO DOM ***
+const searchTrackInput = document.getElementById('searchTrackInput');
 
 // Controlli iPod
 const shuffleBtn = document.getElementById('shuffleBtn');
-const playPauseBtn = document.getElementById('playPauseBtn'); // Pulsante centrale Play/Pause
+const playPauseBtn = document.getElementById('playPauseBtn');
 const playPauseIcon = document.getElementById('playPauseIcon');
 const volumeSlider = document.getElementById('volumeSlider');
 
@@ -31,19 +38,22 @@ const volumeSlider = document.getElementById('volumeSlider');
 const visualizerSelector = document.getElementById('visualizerSelector');
 const progressBar = document.getElementById('progressBar');
 const timeDisplay = document.getElementById('time-display');
-const progressControl = document.getElementById('progressControl'); // Contenitore cliccabile della barra
-const muteToggleBtn = document.getElementById('muteToggleBtn'); // Pulsante Mute aggiornato nell'HTML
+const progressControl = document.getElementById('progressControl');
+const muteToggleBtn = document.getElementById('muteToggleBtn');
+
+// Elemento Visualizzatore
+const displayScreen = document.getElementById('displayScreen');
 
 // Logica AI (Placeholder)
 const aiPromptInput = document.getElementById('aiPrompt');
-const generatePlaylistBtn = document.getElementById('generatePlaylistBtn'); // Pulsante AI effettivo
+const generatePlaylistBtn = document.getElementById('generatePlaylistBtn');
 const aiStatus = document.getElementById('aiStatus');
 
 
 // URL Base del Backend Django
-const DJANGO_BASE_HOST = 'http://127.0.0.1:8000/'; // URL Base
+const DJANGO_BASE_HOST = 'http://127.0.0.1:8000/';
 const DJANGO_API_BASE = DJANGO_BASE_HOST + 'api/';
-const DJANGO_MEDIA_PREFIX = 'media/'; // Prefisso Media di Django
+const DJANGO_MEDIA_PREFIX = 'media/';
 
 // --- Variabili Visualizzatore ---
 let audioContext = null;
@@ -73,7 +83,6 @@ const formatTime = (seconds) => {
 function resizeCanvas() {
     if (!canvas) return;
     const container = canvas.parentElement;
-    // Imposta la dimensione basandosi sul contenitore per un layout fluido
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
 }
@@ -84,10 +93,7 @@ function updateProgressBar() {
     if (isFinite(duration) && duration > 0) {
         const percentage = (currentTime / duration) * 100;
         progressBar.style.width = `${percentage}%`;
-
-        // Aggiorna la variabile CSS per il thumb di trascinamento
         progressControl.style.setProperty('--current-percentage', `${percentage}%`);
-
         timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
     } else {
         progressBar.style.width = '0%';
@@ -96,18 +102,14 @@ function updateProgressBar() {
     }
 }
 
-// FUNZIONE SEEKING (Spostamento sulla barra)
+// FUNZIONE SEEKING (Spostamento sulla barra - Click Singolo)
 function seekTrack(e) {
     if (!audioPlayer.src || !progressControl) return;
 
-    // Controlla se l'audio è caricato
     if (isNaN(audioPlayer.duration) || audioPlayer.duration === 0) {
         aiStatus.textContent = "Carica un brano prima di cercare.";
         return;
     }
-
-    // Assicurati che l'utente abbia cliccato sulla barra
-    if (e.target.closest('#progressControl') !== progressControl) return;
 
     const controlRect = progressControl.getBoundingClientRect();
     const clickX = e.clientX - controlRect.left;
@@ -118,6 +120,7 @@ function seekTrack(e) {
 
     if (isFinite(newTime)) {
         audioPlayer.currentTime = newTime;
+        aiStatus.textContent = `Spostato a ${formatTime(newTime)}. 🕒`;
     }
 }
 
@@ -129,25 +132,19 @@ function toggleMute() {
     const iconEl = muteToggleBtn.querySelector('i');
 
     if (audioPlayer.muted) {
-        // Salva l'ultimo volume non muto prima di silenziare
         if (audioPlayer.volume > 0) {
             volumeSlider.dataset.lastVolume = audioPlayer.volume;
         }
-
-        // Aggiorna l'interfaccia
         iconEl.classList.replace('fa-volume-up', 'fa-volume-mute');
         muteToggleBtn.classList.add('active');
-        // Imposta lo slider a 0 ma disabilitalo per visualizzare lo stato mute
         volumeSlider.value = 0;
         volumeSlider.disabled = true;
 
     } else {
-        // Alza il volume ripristinando l'ultimo valore non muto
-        const lastVolume = parseFloat(volumeSlider.dataset.lastVolume) || 0.75; // 0.75 è il valore di default in HTML
+        const lastVolume = parseFloat(volumeSlider.dataset.lastVolume) || 0.75;
         audioPlayer.volume = lastVolume;
         volumeSlider.value = lastVolume;
 
-        // Aggiorna l'interfaccia
         iconEl.classList.replace('fa-volume-mute', 'fa-volume-up');
         muteToggleBtn.classList.remove('active');
         volumeSlider.disabled = false;
@@ -157,40 +154,57 @@ function toggleMute() {
 
 // --- FUNZIONI DI RIPRODUZIONE ---
 
+function skipForward(seconds = 10) {
+    if (!audioPlayer.src || isNaN(audioPlayer.duration)) return;
+    let newTime = audioPlayer.currentTime + seconds;
+    if (newTime > audioPlayer.duration) {
+        newTime = audioPlayer.duration;
+    }
+    audioPlayer.currentTime = newTime;
+    console.log(`Saltato in avanti di ${seconds}s a ${formatTime(newTime)}`);
+}
+
+function skipBackward(seconds = 10) {
+    if (!audioPlayer.src || isNaN(audioPlayer.duration)) return;
+    let newTime = audioPlayer.currentTime - seconds;
+    if (newTime < 0) {
+        newTime = 0;
+    }
+    audioPlayer.currentTime = newTime;
+    console.log(`Saltato indietro di ${seconds}s a ${formatTime(newTime)}`);
+}
+
+
 async function togglePlayPause() {
     if (currentPlaylist.length === 0) {
         aiStatus.textContent = "Carica una playlist per iniziare.";
         return;
     }
 
-    // Se l'SRC è vuoto, carica il primo brano
     if (!audioPlayer.src || audioPlayer.src.endsWith('undefined')) {
         loadTrack(0);
         return;
     }
 
-    // Assicurati che l'AudioContext sia pronto prima di riprodurre
-    await setupVisualizer(); // Attendiamo che l'inizializzazione sia completa
+    await setupVisualizer();
 
     if (isPlaying) {
         audioPlayer.pause();
         isPlaying = false;
         playPauseIcon.classList.replace('fa-pause', 'fa-play');
     } else {
-        // Riprendi l'AudioContext se sospeso dal browser
         if (audioContext && audioContext.state === 'suspended') {
             try {
-                // *** CRUCIALE: Attendiamo la ripresa per la stabilità USB ***
                 await audioContext.resume();
                 console.log("AudioContext ripreso con successo.");
             } catch (err) {
                 console.error("Errore nel riprendere l'AudioContext:", err);
-                // Se non riusciamo a riprendere, non tentiamo il play
                 aiStatus.textContent = "Errore Audio: Impossibile riattivare il contesto.";
                 return;
             }
         }
 
+        // Tentativo di play, il 'canplay' listener è ora più importante.
         audioPlayer.play().then(() => {
             isPlaying = true;
             playPauseIcon.classList.replace('fa-play', 'fa-pause');
@@ -220,14 +234,13 @@ function loadTrack(index) {
     const track = currentPlaylist[currentTrackIndex];
 
     let relativeUrl = track.url;
-    // Logica di pulizia e reindirizzamento (assicurati che sia consistente con il backend)
     relativeUrl = relativeUrl.replace(/^\/api\/music_stream\//, '').replace(/^\/api\//, '').replace(/^music_stream\//, '').replace(/^\//, '');
     const encodedFilepath = encodeURIComponent(relativeUrl);
     const finalSrc = DJANGO_BASE_HOST + DJANGO_MEDIA_PREFIX + encodedFilepath;
 
     if (audioPlayer.src !== finalSrc) {
         audioPlayer.src = finalSrc;
-        audioPlayer.load(); // Forziamo il ricaricamento
+        audioPlayer.load();
         console.log("SRC Caricato:", finalSrc);
     }
 
@@ -235,11 +248,11 @@ function loadTrack(index) {
 
     updatePlaylistView();
 
-    // Tenta il play se era in riproduzione o se è il primo brano
-    if (isPlaying || index === 0) {
-        // Non chiamiamo togglePlayPause direttamente qui, ma aspettiamo il loadeddata
-        // per avviare la riproduzione. Chiamiamo setupVisualizer in modo preventivo.
-        setupVisualizer();
+    // Logica di riproduzione gestita ora dal listener 'canplay'
+    if (isPlaying) {
+        setupVisualizer(); // Assicurati che l'analizzatore sia attivo
+    } else {
+        playPauseIcon.classList.replace('fa-pause', 'fa-play');
     }
 }
 
@@ -251,12 +264,10 @@ function updatePlaylistView() {
         li.textContent = `${index + 1}. ${track.title} - ${track.artist} (${track.album})`;
         li.dataset.index = index;
 
-        // Aggiungi classi Tailwind per l'aspetto della lista
         li.classList.add('p-2', 'rounded-lg', 'cursor-pointer', 'shadow-sm', 'bg-white', 'hover:bg-gray-200', 'transition', 'duration-150', 'ease-in-out');
 
         if (index === currentTrackIndex) {
             li.classList.add('active');
-            // Scrolla per la traccia corrente
             if (currentTrackIndex > 0 || isPlaying) {
                 li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
@@ -264,7 +275,6 @@ function updatePlaylistView() {
 
         li.addEventListener('click', async () => {
             loadTrack(index);
-            // Dopo aver caricato, assicuriamoci di riprodurre
             if (!isPlaying) await togglePlayPause();
         });
         playlistEl.appendChild(li);
@@ -274,7 +284,6 @@ function updatePlaylistView() {
     nextBtn.disabled = !hasTracks;
     prevBtn.disabled = !hasTracks;
 
-    // Aggiorna lo stato dello shuffle sul bottone
     shuffleBtn.classList.toggle('active', isShuffling);
 }
 
@@ -294,18 +303,14 @@ function toggleShuffle() {
     const currentTrack = currentPlaylist.length > 0 ? currentPlaylist[currentTrackIndex] : null;
 
     if (isShuffling) {
-        // Salva l'ordine attuale prima di rimescolare
-        originalPlaylistOrder = [...fullLibrary]; // Deve usare l'intera libreria non filtrata
-        currentPlaylist = shuffleArray([...currentPlaylist]); // Mescola la playlist filtrata
+        originalPlaylistOrder = [...fullLibrary];
+        currentPlaylist = shuffleArray([...currentPlaylist]);
     } else {
-        // Ripristina l'ordine originale della lista filtrata
-        applyFilters(); // Riaplica i filtri per ripristinare l'ordine originale
+        applyFilters();
     }
 
     if (currentTrack) {
-        // Trova l'indice del brano corrente nel nuovo/vecchio ordine
         currentTrackIndex = currentPlaylist.findIndex(t => t.id === currentTrack.id);
-        // Se non trova l'ID (impossibile se applyFilters è corretto), riporta a 0
         if (currentTrackIndex === -1) currentTrackIndex = 0;
     } else {
         currentTrackIndex = 0;
@@ -320,22 +325,18 @@ function toggleShuffle() {
 async function setupVisualizer() {
     if (audioContext === null) {
         try {
-            // *** MODIFICA CHIAVE: Latenza impostata su 'playback' per maggiore stabilità DAC ***
             audioContext = new (window.AudioContext || window.webkitAudioContext)({
                 latencyHint: 'playback',
             });
             analyser = audioContext.createAnalyser();
             analyser.smoothingTimeConstant = 0.8;
 
-            // Connette l'elemento audio (HTMLMediaElement)
             source = audioContext.createMediaElementSource(audioPlayer);
 
-            // Connessione completa
             source.connect(analyser);
             analyser.connect(audioContext.destination);
             audioConnected = true;
 
-            // Inizia il loop di disegno
             drawVisualizer();
 
         } catch (e) {
@@ -344,10 +345,8 @@ async function setupVisualizer() {
             return;
         }
     }
-    // Riprendi se sospeso (necessario dopo l'interazione utente)
     if (audioContext && audioContext.state === 'suspended') {
         try {
-            // Tentativo di ripresa
             await audioContext.resume();
         } catch (err) {
             console.error("Errore nel riprendere l'AudioContext:", err);
@@ -360,13 +359,13 @@ function setAnalyserFFTSize(visualizerType) {
     if (!analyser) return;
     switch (visualizerType) {
         case 'waveform':
-            analyser.fftSize = 2048; // Più dettagliato per la forma d'onda
+            analyser.fftSize = 2048;
             break;
         case 'bars':
-            analyser.fftSize = 256; // Più reattivo per le barre
+            analyser.fftSize = 256;
             break;
         case 'circles':
-            analyser.fftSize = 512; // Compromesso per l'effetto cerchi
+            analyser.fftSize = 512;
             break;
         default:
             analyser.fftSize = 256;
@@ -380,12 +379,10 @@ function drawVisualizer() {
     const WIDTH = canvas.width;
     const HEIGHT = canvas.height;
 
-    // Sfondo costante per tutti i tipi di visualizzatore
-    canvasContext.fillStyle = 'rgb(31, 41, 55)'; // Colore scuro da Tailwind (gray-800 o simile)
+    canvasContext.fillStyle = 'rgb(31, 41, 55)';
     canvasContext.fillRect(0, 0, WIDTH, HEIGHT);
 
     if (audioPlayer.paused && !isPlaying) {
-        // Disegna testo di pausa quando non è in riproduzione
         canvasContext.font = "20px Inter, sans-serif";
         canvasContext.fillStyle = 'rgba(255, 255, 255, 0.5)';
         canvasContext.textAlign = 'center';
@@ -394,10 +391,7 @@ function drawVisualizer() {
     }
 
     frame++;
-
-    // Reset shadow per evitare artefatti
     canvasContext.shadowBlur = 0;
-
 
     switch (currentVisualizerType) {
         case 'waveform':
@@ -418,11 +412,8 @@ function drawWaveform(WIDTH, HEIGHT) {
     analyser.getByteTimeDomainData(dataArray);
 
     canvasContext.lineWidth = 2;
-    // Tonalità che cambia lentamente
     const hue = (frame * 0.5) % 360;
     canvasContext.strokeStyle = `hsl(${hue}, 100%, 70%)`;
-
-    // Ombra/bagliore
     canvasContext.shadowBlur = 10;
     canvasContext.shadowColor = canvasContext.strokeStyle;
 
@@ -432,7 +423,6 @@ function drawWaveform(WIDTH, HEIGHT) {
     let x = 0;
 
     for (let i = 0; i < bufferLength; i++) {
-        // La forma d'onda è centrata verticalmente (tra 0 e 2) - 1.0 = centro
         const v = dataArray[i] / 128.0;
         const y = v * HEIGHT / 2;
 
@@ -444,8 +434,6 @@ function drawWaveform(WIDTH, HEIGHT) {
 
         x += sliceWidth;
     }
-
-    // Linea per chiudere il percorso (opzionale, ma mantiene la linea più pulita)
     canvasContext.lineTo(WIDTH, HEIGHT / 2);
     canvasContext.stroke();
 
@@ -457,7 +445,6 @@ function drawBars(WIDTH, HEIGHT) {
     const dataArray = new Uint8Array(bufferLength);
     analyser.getByteFrequencyData(dataArray);
 
-    // Usa solo metà delle barre per un effetto migliore (meno barre, più grandi)
     const displayLength = Math.floor(bufferLength / 2);
     const barWidth = (WIDTH / displayLength) * 0.9;
     let barX = 0;
@@ -465,16 +452,14 @@ function drawBars(WIDTH, HEIGHT) {
     for (let i = 0; i < displayLength; i++) {
         let barHeight = dataArray[i] / 255 * HEIGHT * 0.9;
 
-        const hue = (i / displayLength) * 120 + 240; // Da blu a magenta
+        const hue = (i / displayLength) * 120 + 240;
         canvasContext.fillStyle = `hsl(${hue % 360}, 100%, ${30 + barHeight / (HEIGHT * 2)}%)`;
         canvasContext.shadowBlur = 5;
         canvasContext.shadowColor = canvasContext.fillStyle;
 
-
-        // Disegna le barre
         canvasContext.fillRect(barX, HEIGHT - barHeight, barWidth, barHeight);
 
-        barX += barWidth + 2; // Spazio tra le barre
+        barX += barWidth + 2;
     }
 }
 
@@ -488,7 +473,6 @@ function drawCircles(WIDTH, HEIGHT) {
     const maxRadius = Math.min(WIDTH, HEIGHT) / 2 * 0.9;
     const numCircles = 10;
 
-    // Estrai il valore medio delle prime frequenze (bassi)
     const bassValue = dataArray.slice(0, 10).reduce((a, b) => a + b, 0) / 10;
     const overallAmplitude = bassValue / 255;
 
@@ -496,13 +480,11 @@ function drawCircles(WIDTH, HEIGHT) {
         const index = Math.floor((i / numCircles) * bufferLength / 2);
         const value = dataArray[index] || 0;
 
-        // Variazione del raggio basata sul valore e sull'ampiezza generale
         const radius = (i / numCircles) * maxRadius + (overallAmplitude * 10);
 
         canvasContext.beginPath();
         canvasContext.arc(centerX, centerY, radius, 0, Math.PI * 2);
 
-        // Colore che ruota (effetto psichedelico)
         const hue = (index * 5 + frame * 0.8) % 360;
         const lightness = 40 + (value / 255) * 40;
 
@@ -528,19 +510,16 @@ volumeSlider.addEventListener('input', (event) => {
     const newVolume = parseFloat(event.target.value);
     audioPlayer.volume = newVolume;
 
-    // Se stiamo aumentando il volume da 0, disattiva il mute se era attivo
     if (audioPlayer.muted && newVolume > 0) {
         audioPlayer.muted = false;
         muteToggleBtn.querySelector('i').classList.replace('fa-volume-mute', 'fa-volume-up');
         muteToggleBtn.classList.remove('active');
         volumeSlider.disabled = false;
     }
-    // Se stiamo mettendo a 0 il volume, attiva il mute e aggiorna l'icona
     else if (!audioPlayer.muted && newVolume === 0) {
         audioPlayer.muted = true;
         muteToggleBtn.querySelector('i').classList.replace('fa-volume-up', 'fa-volume-mute');
         muteToggleBtn.classList.add('active');
-        // Lo slider rimane a 0 e disabilitato (gestito in toggleMute, ma qui non disabilitiamo)
     }
 
     if (newVolume > 0) {
@@ -554,6 +533,7 @@ visualizerSelector.addEventListener('change', (event) => {
     setAnalyserFFTSize(currentVisualizerType);
 });
 
+// Quando il brano finisce, carica il successivo
 audioPlayer.addEventListener('ended', () => {
     const nextIndex = (currentTrackIndex + 1) % currentPlaylist.length;
     loadTrack(nextIndex);
@@ -562,10 +542,92 @@ audioPlayer.addEventListener('ended', () => {
 audioPlayer.addEventListener('timeupdate', updateProgressBar);
 audioPlayer.addEventListener('loadedmetadata', updateProgressBar);
 
-if (progressControl) {
-    // Usa un listener sull'elemento genitore per intercettare i click
-    progressControl.addEventListener('click', seekTrack);
+// *** LISTENER PER AUTOPLAY ***
+audioPlayer.addEventListener('canplay', () => {
+    if (isPlaying) {
+        audioPlayer.play().catch(e => {
+            console.error("Auto-play bloccato:", e);
+            aiStatus.textContent = "Auto-play bloccato dal browser. Premi Play. ⚠️";
+            isPlaying = false;
+            playPauseIcon.classList.replace('fa-pause', 'fa-play');
+        });
+    }
+});
+// *****************************************
+
+
+// --- NUOVA LOGICA: DOPPIO CLICK SULL'AREA DEL VISUALIZZATORE (Skip Avanti/Indietro) ---
+if (displayScreen) {
+    displayScreen.addEventListener('dblclick', (event) => {
+        // Ignora il click se il brano non è riproducibile
+        if (!audioPlayer.src || isNaN(audioPlayer.duration) || currentPlaylist.length === 0) {
+            aiStatus.textContent = "Carica un brano per usare lo skip. 🖱️";
+            return;
+        }
+
+        const controlRect = displayScreen.getBoundingClientRect();
+        const clickX = event.clientX - controlRect.left;
+        const barWidth = controlRect.width;
+
+        // Se clicca nella metà sinistra, skip backward
+        if (clickX / barWidth < 0.5) {
+            skipBackward(10);
+            aiStatus.textContent = "Saltato indietro di 10 secondi. ⏪";
+        } else {
+            // Se clicca nella metà destra, skip forward
+            skipForward(10);
+            aiStatus.textContent = "Saltato avanti di 10 secondi. ⏩";
+        }
+    });
 }
+// -----------------------------------------------------------------------------
+
+
+// --- LOGICA CHIAVE PER BARRA DI PROGRESSO: CLICK SINGOLO (Seeking) E DOPPIO CLICK (Ignorato) ---
+if (progressControl) {
+
+    // 1. GESTIONE DOPPIO CLICK (Per prevenire l'esecuzione del click singolo)
+    progressControl.addEventListener('dblclick', (event) => {
+        // Cancella il timer per impedire che l'evento click in ritardo esegua il seek
+        if (clickTimer) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
+        }
+
+        isDblClicking = true;
+        // Non facciamo nulla qui, ma questo previene l'azione di seeking accidentale al dblclick
+        // e imposta il flag.
+
+        // Timeout di sicurezza per resettare il flag
+        setTimeout(() => {
+            isDblClicking = false;
+        }, 100);
+    });
+
+    // 2. GESTIONE CLICK SINGOLO (Seeking normale)
+    progressControl.addEventListener('click', (event) => {
+        // Se siamo in un dblclick appena avvenuto, ignora
+        if (isDblClicking) {
+            isDblClicking = false;
+            return;
+        }
+
+        // Cancella qualsiasi timer precedente (evita seeking doppi)
+        if (clickTimer) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
+        }
+
+        // Ritarda l'azione di seeking: se un dblclick avviene prima che scatti il timer, 
+        // l'azione seek viene annullata dal gestore dblclick.
+        clickTimer = setTimeout(() => {
+            seekTrack(event);
+            clickTimer = null;
+        }, DBL_CLICK_DELAY);
+    });
+}
+// ---------------------------------------------------------------------------------
+
 
 // Placeholder per il bottone AI - non fa nulla senza un'implementazione Django
 generatePlaylistBtn.addEventListener('click', () => {
@@ -585,16 +647,15 @@ async function fetchTracks(endpoint = 'tracks/', method = 'GET', body = null) {
 
         const response = await fetch(url, config);
         if (!response.ok) {
-            // Simula un errore HTTP per mostrare che l'API non risponde correttamente
             aiStatus.textContent = "Errore di connessione: il server Django non risponde all'API /tracks/. Usando dati fittizi.";
             console.error(`Errore HTTP: ${response.status}`);
-            return simulateTracks(); // Carica dati fittizi se l'API fallisce
+            return simulateTracks();
         }
         return await response.json();
     } catch (error) {
         aiStatus.textContent = `Errore di comunicazione con il server: ${error.message}. Usando dati fittizi.`;
         console.error('API Error:', error);
-        return simulateTracks(); // Carica dati fittizi se l'API fallisce
+        return simulateTracks();
     }
 }
 
@@ -636,15 +697,12 @@ function populateFilters(filters) {
 function applyFilters() {
     const selectedArtist = artistFilter.value;
     const selectedAlbum = albumFilter.value;
-    // Ottiene il termine di ricerca (se l'elemento esiste) e lo normalizza
-    const searchTerm = (searchTrackInput ? searchTrackInput.value : '').toLowerCase().trim(); // *** NUOVA LOGICA DI RICERCA ***
-
+    const searchTerm = (searchTrackInput ? searchTrackInput.value : '').toLowerCase().trim();
 
     let filteredTracks = fullLibrary.filter(track => {
         const matchArtist = selectedArtist === 'all' || track.artist === selectedArtist;
         const matchAlbum = selectedAlbum === 'all' || track.album === selectedAlbum;
 
-        // Filtra in base al termine di ricerca (su titolo, artista o album)
         let matchSearch = true;
         if (searchTerm.length > 0) {
             matchSearch = track.title.toLowerCase().includes(searchTerm) ||
@@ -652,7 +710,6 @@ function applyFilters() {
                 track.album.toLowerCase().includes(searchTerm);
         }
 
-        // Unisce tutti i filtri
         return matchArtist && matchAlbum && matchSearch;
     });
 
@@ -670,7 +727,6 @@ function applyFilters() {
     }
 
     isShuffling = false;
-    // Ri-setta l'originale in base ai filtri, se non siamo in shuffle
     originalPlaylistOrder = [...currentPlaylist];
 
     currentTrackIndex = 0;
@@ -698,22 +754,18 @@ function applyFilters() {
 artistFilter.addEventListener('change', applyFilters);
 albumFilter.addEventListener('change', applyFilters);
 
-// *** NUOVO LISTENER: Lancia applyFilters ad ogni input nel campo di ricerca ***
 if (searchTrackInput) {
     searchTrackInput.addEventListener('input', applyFilters);
 }
 
 async function initializePlayer() {
-    // Tenta di caricare le tracce dall'API
     let tracks = await fetchTracks('tracks/');
     let filters = null;
 
     if (tracks.length === 0) {
-        // Se la chiamata API fallisce e non ci sono dati simulati, usa i dati fittizi
         tracks = simulateTracks();
         filters = simulateFilters(tracks);
     } else {
-        // Se la chiamata API ha successo, ottieni i filtri
         filters = await fetchTracks('filters/');
         if (!filters || Object.keys(filters).length === 0 || !Array.isArray(filters.artists)) {
             filters = simulateFilters(tracks);
@@ -727,12 +779,10 @@ async function initializePlayer() {
 
         populateFilters(filters);
 
-        // Imposta il volume iniziale e lo stato del mute
         const initialVolume = parseFloat(volumeSlider.value);
         audioPlayer.volume = initialVolume;
         volumeSlider.dataset.lastVolume = initialVolume;
 
-        // Chiama applyFilters per impostare l'SRC iniziale senza tentare il play
         applyFilters();
 
     } else {
@@ -740,7 +790,6 @@ async function initializePlayer() {
     }
 
     updatePlaylistView();
-    // Inizializza il contesto audio con l'hint di latenza
     await setupVisualizer();
 }
 
