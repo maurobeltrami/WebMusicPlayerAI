@@ -10,6 +10,8 @@ let isPlaying = false; // Stato di riproduzione
 let isDblClicking = false; // Flag utilizzato per distinguere click singolo da doppio
 let clickTimer = null; // Timer per ritardare l'azione di seeking
 const DBL_CLICK_DELAY = 300; // 300ms, il ritardo massimo per un doppio click
+// --- NUOVA VARIABILE DI SICUREZZA ---
+const MAX_SAFE_VOLUME = 0.9; // Livello di sicurezza per evitare il clipping su sistemi auto (Uconnect)
 // -----------------------------------------------------------
 
 
@@ -141,9 +143,10 @@ function toggleMute() {
         volumeSlider.disabled = true;
 
     } else {
+        // Usa il volume memorizzato o un valore di default sicuro
         const lastVolume = parseFloat(volumeSlider.dataset.lastVolume) || 0.75;
-        audioPlayer.volume = lastVolume;
-        volumeSlider.value = lastVolume;
+        audioPlayer.volume = Math.min(lastVolume, MAX_SAFE_VOLUME); // Applica limite anche qui
+        volumeSlider.value = audioPlayer.volume; // Aggiorna lo slider al volume effettivo
 
         iconEl.classList.replace('fa-volume-mute', 'fa-volume-up');
         muteToggleBtn.classList.remove('active');
@@ -506,9 +509,21 @@ prevBtn.addEventListener('click', () => loadTrack(currentTrackIndex - 1));
 shuffleBtn.addEventListener('click', toggleShuffle);
 muteToggleBtn.addEventListener('click', toggleMute);
 
+// *** MODIFICA CHIAVE QUI: LIMITAZIONE DEL VOLUME ***
 volumeSlider.addEventListener('input', (event) => {
-    const newVolume = parseFloat(event.target.value);
+    let newVolume = parseFloat(event.target.value);
+
+    // Passaggio 1: Applica il limite massimo di sicurezza (0.9)
+    newVolume = Math.min(newVolume, MAX_SAFE_VOLUME);
+
     audioPlayer.volume = newVolume;
+
+    // Se l'utente tenta di alzare il cursore oltre il limite (1.0), 
+    // aggiorniamo l'interfaccia utente in modo che rifletta il limite
+    if (parseFloat(event.target.value) > MAX_SAFE_VOLUME) {
+        event.target.value = MAX_SAFE_VOLUME;
+    }
+
 
     if (audioPlayer.muted && newVolume > 0) {
         audioPlayer.muted = false;
@@ -526,6 +541,7 @@ volumeSlider.addEventListener('input', (event) => {
         volumeSlider.dataset.lastVolume = newVolume;
     }
 });
+// *****************************************
 
 
 visualizerSelector.addEventListener('change', (event) => {
@@ -738,6 +754,7 @@ function applyFilters() {
 
         const encodedFilepath = encodeURIComponent(relativeUrl);
 
+        // Il volume è già limitato in initializePlayer, qui carichiamo solo l'SRC
         audioPlayer.src = DJANGO_BASE_HOST + DJANGO_MEDIA_PREFIX + encodedFilepath;
         currentTrackDisplay.textContent = `${track.title} - ${track.artist} (${track.album})`;
 
@@ -779,9 +796,16 @@ async function initializePlayer() {
 
         populateFilters(filters);
 
-        const initialVolume = parseFloat(volumeSlider.value);
+        // *** MODIFICA CHIAVE QUI: IMPOSTA VOLUME INIZIALE DI SICUREZZA (Max 0.9) ***
+        let initialVolume = parseFloat(volumeSlider.value);
+
+        // Limita il valore iniziale al massimo sicuro
+        initialVolume = Math.min(initialVolume, MAX_SAFE_VOLUME);
+
         audioPlayer.volume = initialVolume;
+        volumeSlider.value = initialVolume; // Aggiorna lo slider se il suo valore iniziale era 1.0
         volumeSlider.dataset.lastVolume = initialVolume;
+        // ****************************************************************
 
         applyFilters();
 
