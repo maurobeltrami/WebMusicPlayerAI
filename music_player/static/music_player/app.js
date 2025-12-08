@@ -68,12 +68,12 @@ if (canvas) {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 }
-let currentVisualizerType = 'waveform';
+let currentVisualizerType = 'none'; // Imposta di default su 'none' per sicurezza USB/HDMI
 let frame = 0;
 let audioConnected = false;
 
 // *** NUOVA VARIABILE PER GESTIRE IL PROBLEMA JITTER/USB ***
-let isVisualizerActive = true;
+let isVisualizerActive = false; // Inizializzato a false per 'none'
 // ----------------------------------------------------------
 
 
@@ -101,6 +101,13 @@ function updateProgressBar() {
         progressBar.style.width = `${percentage}%`;
         progressControl.style.setProperty('--current-percentage', `${percentage}%`);
         timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+
+        // Aggiorna il thumb della progress bar
+        const thumb = progressControl.querySelector('.progress-thumb');
+        if (thumb) {
+            thumb.style.left = `${percentage}%`;
+        }
+
     } else {
         progressBar.style.width = '0%';
         progressControl.style.setProperty('--current-percentage', `0%`);
@@ -124,9 +131,19 @@ function seekTrack(e) {
     const percentage = clickX / barWidth;
     const newTime = percentage * audioPlayer.duration;
 
+    // Memorizza lo stato di riproduzione corrente
+    const wasPlaying = !audioPlayer.paused;
+
     if (isFinite(newTime)) {
         audioPlayer.currentTime = newTime;
         aiStatus.textContent = `Spostato a ${formatTime(newTime)}. 🕒`;
+
+        // Se era in riproduzione, assicurati che continui il play
+        if (wasPlaying) {
+            audioPlayer.play().catch(e => {
+                console.error("Errore nel riprendere il play dopo seek:", e);
+            });
+        }
     }
 }
 
@@ -159,27 +176,59 @@ function toggleMute() {
 }
 
 
-// --- FUNZIONI DI RIPRODUZIONE ---
+// --- FUNZIONI DI RIPRODUZIONE (MODIFICATE PER GESTIONE MOBILE SEEKING) ---
 
 function skipForward(seconds = 10) {
     if (!audioPlayer.src || isNaN(audioPlayer.duration)) return;
+
+    // Memorizza lo stato di riproduzione corrente
+    const wasPlaying = !audioPlayer.paused;
+
     let newTime = audioPlayer.currentTime + seconds;
     if (newTime > audioPlayer.duration) {
         newTime = audioPlayer.duration;
     }
+
+    // Imposta il nuovo tempo
     audioPlayer.currentTime = newTime;
+
+    // Se era in riproduzione, assicurati che continui il play
+    if (wasPlaying) {
+        // Riprova il play in caso di interruzione da parte del browser mobile
+        audioPlayer.play().catch(e => {
+            console.error("Errore nel riprendere il play dopo skip:", e);
+        });
+    }
+
     console.log(`Saltato in avanti di ${seconds}s a ${formatTime(newTime)}`);
 }
 
 function skipBackward(seconds = 10) {
     if (!audioPlayer.src || isNaN(audioPlayer.duration)) return;
+
+    // Memorizza lo stato di riproduzione corrente
+    const wasPlaying = !audioPlayer.paused;
+
     let newTime = audioPlayer.currentTime - seconds;
     if (newTime < 0) {
         newTime = 0;
     }
+
+    // Imposta il nuovo tempo
     audioPlayer.currentTime = newTime;
+
+    // Se era in riproduzione, assicurati che continui il play
+    if (wasPlaying) {
+        // Riprova il play in caso di interruzione da parte del browser mobile
+        audioPlayer.play().catch(e => {
+            console.error("Errore nel riprendere il play dopo skip:", e);
+        });
+    }
+
     console.log(`Saltato indietro di ${seconds}s a ${formatTime(newTime)}`);
 }
+
+// --------------------------------------------------------------------------
 
 
 async function togglePlayPause() {
@@ -283,7 +332,11 @@ function updatePlaylistView() {
 
         li.addEventListener('click', async () => {
             loadTrack(index);
-            if (!isPlaying) await togglePlayPause();
+            // Se non stava suonando, aspetta il canplay event per avviare il play
+            if (!isPlaying) {
+                isPlaying = true; // Imposta lo stato per l'autoplay in canplay
+                playPauseIcon.classList.replace('fa-play', 'fa-pause');
+            }
         });
         playlistEl.appendChild(li);
     });
@@ -358,7 +411,7 @@ async function setupVisualizer() {
     }
 
     // 2. Connessione in base allo stato
-    if (isVisualizerActive) {
+    if (isVisualizerActive && analyser) {
         // Connessione per l'analisi (flusso: Audio Player -> Analizzatore -> Destinazione)
         source.connect(analyser);
         analyser.connect(audioContext.destination);
@@ -411,12 +464,12 @@ function drawVisualizer() {
     canvasContext.fillStyle = 'rgb(31, 41, 55)';
     canvasContext.fillRect(0, 0, WIDTH, HEIGHT);
 
-    // Se il visualizzatore è disattivo o in pausa, mostra lo stato
+    // Se il visualizzatore è disattivo o l'AudioContext non è connesso
     if (!isVisualizerActive) {
         canvasContext.font = "20px Inter, sans-serif";
         canvasContext.fillStyle = 'rgba(255, 255, 255, 0.7)';
         canvasContext.textAlign = 'center';
-        canvasContext.fillText("VISUALIZZATORE DISATTIVATO", WIDTH / 2, HEIGHT / 2);
+        canvasContext.fillText("VISUALIZZATORE DISATTIVATO (USB/HDMI)", WIDTH / 2, HEIGHT / 2);
         return;
     }
 
@@ -556,6 +609,7 @@ volumeSlider.addEventListener('input', (event) => {
 
     audioPlayer.volume = newVolume;
 
+    // Forza lo slider a non superare il limite di sicurezza (solo visivo)
     if (parseFloat(event.target.value) > MAX_SAFE_VOLUME) {
         event.target.value = MAX_SAFE_VOLUME;
     }
@@ -579,7 +633,7 @@ volumeSlider.addEventListener('input', (event) => {
 // *****************************************
 
 
-// *** NUOVA LOGICA: GESTIONE ATTIVAZIONE/DISATTIVAZIONE VISUALIZZATORE ***
+// *** GESTIONE ATTIVAZIONE/DISATTIVAZIONE VISUALIZZATORE ***
 visualizerSelector.addEventListener('change', async (event) => {
     currentVisualizerType = event.target.value;
 
@@ -600,7 +654,7 @@ visualizerSelector.addEventListener('change', async (event) => {
         isVisualizerActive = true;
 
         // Riconnette l'analizzatore
-        if (source && analyser) {
+        if (source && analyser && audioContext) {
             source.disconnect();
             source.connect(analyser);
             analyser.connect(audioContext.destination);
@@ -609,7 +663,7 @@ visualizerSelector.addEventListener('change', async (event) => {
         aiStatus.textContent = "Visualizzatore attivo. 🎵";
     }
 
-    // Assicurati che il ciclo di disegno sia attivo, ma disegnerà solo lo stato "DISATTIVATO" se necessario
+    // Assicurati che il ciclo di disegno sia attivo
     if (!audioConnected) {
         drawVisualizer();
     }
@@ -639,7 +693,7 @@ audioPlayer.addEventListener('canplay', () => {
 // *****************************************
 
 
-// --- NUOVA LOGICA: DOPPIO CLICK SULL'AREA DEL VISUALIZZATORE (Skip Avanti/Indietro) ---
+// --- LOGICA DOPPIO CLICK SULL'AREA DEL VISUALIZZATORE (Skip Avanti/Indietro) ---
 if (displayScreen) {
     displayScreen.addEventListener('dblclick', (event) => {
         // Ignora il click se il brano non è riproducibile
@@ -647,6 +701,15 @@ if (displayScreen) {
             aiStatus.textContent = "Carica un brano per usare lo skip. 🖱️";
             return;
         }
+
+        // Se eravamo in pausa, assicuriamoci di riprendere la riproduzione
+        if (audioPlayer.paused) {
+            audioPlayer.play().then(() => {
+                isPlaying = true;
+                playPauseIcon.classList.replace('fa-play', 'fa-pause');
+            }).catch(e => console.error("Play fallito dopo dblclick in pausa:", e));
+        }
+
 
         const controlRect = displayScreen.getBoundingClientRect();
         const clickX = event.clientX - controlRect.left;
@@ -678,9 +741,6 @@ if (progressControl) {
         }
 
         isDblClicking = true;
-        // Non facciamo nulla qui, ma questo previene l'azione di seeking accidentale al dblclick
-        // e imposta il flag.
-
         // Timeout di sicurezza per resettare il flag
         setTimeout(() => {
             isDblClicking = false;
@@ -872,6 +932,12 @@ async function initializePlayer() {
         volumeSlider.dataset.lastVolume = initialVolume;
         // ******************************
 
+        // Imposta il selettore visualizzatore al valore iniziale (es. 'none')
+        const initialVisualizer = visualizerSelector.value;
+        currentVisualizerType = initialVisualizer;
+        isVisualizerActive = initialVisualizer !== 'none';
+
+
         applyFilters();
 
     } else {
@@ -879,7 +945,8 @@ async function initializePlayer() {
     }
 
     updatePlaylistView();
-    await setupVisualizer(); // setupVisualizer chiamerà drawVisualizer per la prima volta
+    // Inizializza il visualizzatore con lo stato predefinito (none/disattivato)
+    await setupVisualizer();
 }
 
 document.addEventListener('DOMContentLoaded', initializePlayer);
