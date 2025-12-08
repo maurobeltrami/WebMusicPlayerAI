@@ -97,3 +97,38 @@
     background: #F87171;
     /* Rosso */
 }
+
+/* Rende il cursore standard ma visivamente meno invadente */
+#progressControl {
+    cursor: pointer;
+}
+
+/* NASCONDE IL PALLINO DI TRASCINAMENTO SULLA BARRA DI PROGRESSO. */
+.progress-thumb {
+    display: none !important;
+}
+
+/* Nuova classe per la divisione in due metà (solo layout, non logica) */
+.progress-control-wrapper {
+    position: relative;
+}
+
+.progress-control-wrapper::before,
+.progress-control-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    /* Metà larghezza */
+    pointer-events: none;
+    /* Assicura che non interferisca con il clic sulla barra */
+}
+
+.progress-control-wrapper::before {
+    left: 0;
+}
+
+.progress-control-wrapper::after {
+    right: 0;
+}

@@ -72,6 +72,10 @@ let currentVisualizerType = 'waveform';
 let frame = 0;
 let audioConnected = false;
 
+// *** NUOVA VARIABILE PER GESTIRE IL PROBLEMA JITTER/USB ***
+let isVisualizerActive = true;
+// ----------------------------------------------------------
+
 
 // --- UTILITY FUNZIONI ---
 
@@ -189,6 +193,7 @@ async function togglePlayPause() {
         return;
     }
 
+    // Qui chiamiamo setupVisualizer che ora gestisce la connessione condizionalmente
     await setupVisualizer();
 
     if (isPlaying) {
@@ -253,7 +258,7 @@ function loadTrack(index) {
 
     // Logica di riproduzione gestita ora dal listener 'canplay'
     if (isPlaying) {
-        setupVisualizer(); // Assicurati che l'analizzatore sia attivo
+        setupVisualizer(); // Assicurati che l'analizzatore sia attivo (se isVisualizerActive è true)
     } else {
         playPauseIcon.classList.replace('fa-pause', 'fa-play');
     }
@@ -326,6 +331,12 @@ function toggleShuffle() {
 // --- LOGICA VISUALIZZATORE (MULTIPLA) ---
 
 async function setupVisualizer() {
+    // 1. Logica di connessione/disconnessione
+    if (audioContext && source) {
+        // Disconnetti tutti i nodi per evitare connessioni doppie o loop
+        source.disconnect();
+    }
+
     if (audioContext === null) {
         try {
             audioContext = new (window.AudioContext || window.webkitAudioContext)({
@@ -333,21 +344,31 @@ async function setupVisualizer() {
             });
             analyser = audioContext.createAnalyser();
             analyser.smoothingTimeConstant = 0.8;
-
             source = audioContext.createMediaElementSource(audioPlayer);
-
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
             audioConnected = true;
-
-            drawVisualizer();
+            drawVisualizer(); // Avvia il ciclo di disegno
 
         } catch (e) {
             console.error("Web Audio API non supportata o errore di inizializzazione:", e);
             aiStatus.textContent = "Errore Audio: Contesto non inizializzato.";
+            // Se fallisce, forziamo la disattivazione logica per usare solo l'audio element
+            isVisualizerActive = false;
             return;
         }
     }
+
+    // 2. Connessione in base allo stato
+    if (isVisualizerActive) {
+        // Connessione per l'analisi (flusso: Audio Player -> Analizzatore -> Destinazione)
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+    } else {
+        // Connessione diretta (flusso: Audio Player -> Destinazione)
+        // Questo bypassa il Web Audio Graph che crea jitter su USB/HDMI
+        source.connect(audioContext.destination);
+    }
+
+    // 3. Riprendi contesto se sospeso
     if (audioContext && audioContext.state === 'suspended') {
         try {
             await audioContext.resume();
@@ -355,7 +376,12 @@ async function setupVisualizer() {
             console.error("Errore nel riprendere l'AudioContext:", err);
         }
     }
-    setAnalyserFFTSize(currentVisualizerType);
+
+    if (isVisualizerActive) {
+        setAnalyserFFTSize(currentVisualizerType);
+    } else if (canvasContext) {
+        canvasContext.clearRect(0, 0, canvas.width, canvas.height); // Pulisci il canvas
+    }
 }
 
 function setAnalyserFFTSize(visualizerType) {
@@ -377,13 +403,22 @@ function setAnalyserFFTSize(visualizerType) {
 
 function drawVisualizer() {
     requestAnimationFrame(drawVisualizer);
-    if (!analyser || !canvasContext || !canvas) return;
+    if (!canvasContext || !canvas) return;
 
     const WIDTH = canvas.width;
     const HEIGHT = canvas.height;
 
     canvasContext.fillStyle = 'rgb(31, 41, 55)';
     canvasContext.fillRect(0, 0, WIDTH, HEIGHT);
+
+    // Se il visualizzatore è disattivo o in pausa, mostra lo stato
+    if (!isVisualizerActive) {
+        canvasContext.font = "20px Inter, sans-serif";
+        canvasContext.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        canvasContext.textAlign = 'center';
+        canvasContext.fillText("VISUALIZZATORE DISATTIVATO", WIDTH / 2, HEIGHT / 2);
+        return;
+    }
 
     if (audioPlayer.paused && !isPlaying) {
         canvasContext.font = "20px Inter, sans-serif";
@@ -410,6 +445,7 @@ function drawVisualizer() {
 }
 
 function drawWaveform(WIDTH, HEIGHT) {
+    if (!analyser) return;
     const bufferLength = analyser.fftSize;
     const dataArray = new Uint8Array(bufferLength);
     analyser.getByteTimeDomainData(dataArray);
@@ -444,6 +480,7 @@ function drawWaveform(WIDTH, HEIGHT) {
 }
 
 function drawBars(WIDTH, HEIGHT) {
+    if (!analyser) return;
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
     analyser.getByteFrequencyData(dataArray);
@@ -467,6 +504,7 @@ function drawBars(WIDTH, HEIGHT) {
 }
 
 function drawCircles(WIDTH, HEIGHT) {
+    if (!analyser) return;
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
     analyser.getByteFrequencyData(dataArray);
@@ -509,21 +547,18 @@ prevBtn.addEventListener('click', () => loadTrack(currentTrackIndex - 1));
 shuffleBtn.addEventListener('click', toggleShuffle);
 muteToggleBtn.addEventListener('click', toggleMute);
 
-// *** MODIFICA CHIAVE QUI: LIMITAZIONE DEL VOLUME ***
+// *** LOGICA VOLUME (con limite di sicurezza mantenuto) ***
 volumeSlider.addEventListener('input', (event) => {
     let newVolume = parseFloat(event.target.value);
 
-    // Passaggio 1: Applica il limite massimo di sicurezza (0.9)
+    // Applica il limite massimo di sicurezza (0.9)
     newVolume = Math.min(newVolume, MAX_SAFE_VOLUME);
 
     audioPlayer.volume = newVolume;
 
-    // Se l'utente tenta di alzare il cursore oltre il limite (1.0), 
-    // aggiorniamo l'interfaccia utente in modo che rifletta il limite
     if (parseFloat(event.target.value) > MAX_SAFE_VOLUME) {
         event.target.value = MAX_SAFE_VOLUME;
     }
-
 
     if (audioPlayer.muted && newVolume > 0) {
         audioPlayer.muted = false;
@@ -544,10 +579,42 @@ volumeSlider.addEventListener('input', (event) => {
 // *****************************************
 
 
-visualizerSelector.addEventListener('change', (event) => {
+// *** NUOVA LOGICA: GESTIONE ATTIVAZIONE/DISATTIVAZIONE VISUALIZZATORE ***
+visualizerSelector.addEventListener('change', async (event) => {
     currentVisualizerType = event.target.value;
-    setAnalyserFFTSize(currentVisualizerType);
+
+    if (!audioContext) {
+        // Se non è mai stato inizializzato, inizializzalo subito (questo connetterà/disconnetterà correttamente)
+        await setupVisualizer();
+    }
+
+    if (currentVisualizerType === 'none') {
+        isVisualizerActive = false;
+        // Disconnette l'analizzatore e connette la sorgente direttamente alla destinazione
+        if (source) {
+            source.disconnect();
+            source.connect(audioContext.destination);
+        }
+        aiStatus.textContent = "Visualizzatore disattivato. Audio diretto per USB/HDMI. 🔊";
+    } else {
+        isVisualizerActive = true;
+
+        // Riconnette l'analizzatore
+        if (source && analyser) {
+            source.disconnect();
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+        }
+        setAnalyserFFTSize(currentVisualizerType);
+        aiStatus.textContent = "Visualizzatore attivo. 🎵";
+    }
+
+    // Assicurati che il ciclo di disegno sia attivo, ma disegnerà solo lo stato "DISATTIVATO" se necessario
+    if (!audioConnected) {
+        drawVisualizer();
+    }
 });
+// ******************************************************************************
 
 // Quando il brano finisce, carica il successivo
 audioPlayer.addEventListener('ended', () => {
@@ -754,7 +821,6 @@ function applyFilters() {
 
         const encodedFilepath = encodeURIComponent(relativeUrl);
 
-        // Il volume è già limitato in initializePlayer, qui carichiamo solo l'SRC
         audioPlayer.src = DJANGO_BASE_HOST + DJANGO_MEDIA_PREFIX + encodedFilepath;
         currentTrackDisplay.textContent = `${track.title} - ${track.artist} (${track.album})`;
 
@@ -796,16 +862,15 @@ async function initializePlayer() {
 
         populateFilters(filters);
 
-        // *** MODIFICA CHIAVE QUI: IMPOSTA VOLUME INIZIALE DI SICUREZZA (Max 0.9) ***
+        // *** LOGICA VOLUME INIZIALE ***
         let initialVolume = parseFloat(volumeSlider.value);
 
-        // Limita il valore iniziale al massimo sicuro
         initialVolume = Math.min(initialVolume, MAX_SAFE_VOLUME);
 
         audioPlayer.volume = initialVolume;
-        volumeSlider.value = initialVolume; // Aggiorna lo slider se il suo valore iniziale era 1.0
+        volumeSlider.value = initialVolume;
         volumeSlider.dataset.lastVolume = initialVolume;
-        // ****************************************************************
+        // ******************************
 
         applyFilters();
 
@@ -814,7 +879,7 @@ async function initializePlayer() {
     }
 
     updatePlaylistView();
-    await setupVisualizer();
+    await setupVisualizer(); // setupVisualizer chiamerà drawVisualizer per la prima volta
 }
 
 document.addEventListener('DOMContentLoaded', initializePlayer);
