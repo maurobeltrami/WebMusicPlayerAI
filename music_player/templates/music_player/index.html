@@ -2,127 +2,94 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Music Player AI</title>
+    <title>Mauro Music Player</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{% static 'music_player/style.css' %}">
-
-
 </head>
+
 <body class="bg-gray-50 min-h-screen p-4 flex items-start justify-center font-sans">
 
     <div class="max-w-4xl w-full bg-white shadow-2xl rounded-3xl p-6 lg:p-8 transform transition-all duration-300 border-4 border-gray-300">
         
         <header class="mb-6 flex justify-between items-center border-b pb-4">
-            <h1 class="text-3xl font-bold text-gray-800">Mauro Music</h1>
-            <div class="text-sm font-medium text-gray-500" id="aiStatus">Caricamento...</div>
+            <h1 class="text-3xl font-bold text-gray-800 italic tracking-tighter">Mauro<span class="text-blue-600">Music</span></h1>
+            <div class="text-sm font-medium text-gray-500" id="aiStatus">In attesa...</div>
         </header>
 
         <main class="grid lg:grid-cols-3 gap-8">
             
             <aside class="lg:col-span-1 p-4 bg-gray-100 rounded-xl shadow-inner h-fit">
-                <h2 class="text-xl font-semibold mb-4 text-gray-700">Libreria & Filtri</h2>
+                <h2 class="text-xl font-semibold mb-4 text-gray-700"><i class="fas fa-filter mr-2"></i>Libreria</h2>
 
                 <div class="mb-6 p-3 bg-white rounded-xl shadow border border-gray-200">
-                    <label for="searchTrackInput" class="block text-sm font-medium text-gray-700 mb-1">Cerca Traccia (Titolo, Artista, Album)</label>
+                    <label for="searchTrackInput" class="block text-sm font-medium text-gray-700 mb-1">Cerca Traccia</label>
                     <div class="relative">
-                        <input type="text" id="searchTrackInput" placeholder="Digita qui per filtrare..."
-                               class="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
-                               aria-label="Cerca Traccia">
-                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"></i>
+                        <input type="text" id="searchTrackInput" placeholder="Titolo, Artista..."
+                               class="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
                 </div>
+
                 <div class="mb-4">
-                    <label for="artistFilter" class="block text-sm font-medium text-gray-600 mb-1">Filtra per Artista:</label>
-                    <select id="artistFilter" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"></select>
+                    <label for="artistFilter" class="block text-sm font-medium text-gray-600 mb-1">Artista</label>
+                    <select id="artistFilter" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></select>
                 </div>
 
                 <div class="mb-4">
-                    <label for="albumFilter" class="block text-sm font-medium text-gray-600 mb-1">Filtra per Album:</label>
-                    <select id="albumFilter" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"></select>
+                    <label for="albumFilter" class="block text-sm font-medium text-gray-600 mb-1">Album</label>
+                    <select id="albumFilter" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"></select>
                 </div>
                 
-                <p id="filterStatus" class="text-xs text-gray-500 mb-6 mt-2">Caricamento filtri...</p>
-
-                <h2 class="text-xl font-semibold mb-4 text-gray-700 border-t pt-4">Generazione Playlist AI</h2>
-                <div class="mb-4">
-                    <label for="aiPrompt" class="block text-sm font-medium text-gray-600 mb-1">Es: 'Crea una playlist jazz rilassante.'</label>
-                    <input type="text" id="aiPrompt" placeholder="Mood o Genere (es. Jazz Calmo)" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                </div>
-                
-                <button id="generatePlaylistBtn" class="w-full bg-green-500 text-white p-3 rounded-xl font-semibold hover:bg-green-600 transition shadow-md hover:shadow-lg flex items-center justify-center">
-                    <i class="fas fa-magic mr-2"></i> Genera Playlist AI
-                </button>
+                <p id="filterStatus" class="text-xs text-gray-500 mt-2 italic">Caricamento libreria...</p>
             </aside>
             
-            <section class="lg:col-span-2 p-4 bg-gray-200 rounded-xl shadow-lg flex flex-col items-center justify-between">
+            <section class="lg:col-span-2 p-4 bg-gray-200 rounded-xl shadow-lg flex flex-col items-center">
                 
-                <div id="displayScreen" class="w-full p-2 bg-gray-700 rounded-xl shadow-2xl mb-6 flex flex-col items-center justify-center border-4 border-gray-800" style="height: 250px;">
-                    <p id="currentTrack" class="text-center text-sm font-medium text-white mb-2">Seleziona un brano dalla playlist.</p>
+                <div id="displayScreen" class="w-full p-2 bg-gray-700 rounded-xl shadow-2xl mb-6 flex flex-col items-center justify-center border-4 border-gray-800" style="height: 280px;">
+                    <p id="currentTrack" class="text-center text-sm font-medium text-white mb-2 truncate px-4 w-full">Nessun brano selezionato</p>
                     
-                    <div class="w-full flex justify-between items-center px-4 mb-2">
-                        
-                        <div id="progressControl" 
-                             class="progress-control-wrapper w-full h-1 bg-gray-500 rounded-full cursor-pointer relative group">
-                            
-                            <div id="progressBar" class="h-1 bg-green-400 rounded-full transition-all duration-100 ease-linear" style="width: 0%;"></div>
-                            
-                            <div class="progress-thumb absolute h-3 w-3 bg-white border border-gray-400 rounded-full top-1/2 -translate-y-1/2 -translate-x-1/2 left-[var(--progress-percent)]" style="--progress-percent: 0%;"></div>
-
+                    <div class="w-full px-4 mb-1">
+                        <div id="progressControl" class="w-full h-1 bg-gray-500 rounded-full cursor-pointer relative group">
+                            <div id="progressBar" class="h-1 bg-blue-400 rounded-full transition-all duration-100 ease-linear" style="width: 0%;"></div>
                         </div>
                     </div>
-                    <div id="time-display" class="text-xs font-mono text-gray-400">0:00 / 0:00</div>
+                    <div id="time-display" class="text-[10px] font-mono text-gray-400 mb-2">0:00 / 0:00</div>
                     
-                    <div id="visualizerContainer" class="w-full h-40 mt-3 rounded-lg overflow-hidden border border-gray-600">
-                        <canvas id="visualizer" class="block"></canvas>
+                    <div id="visualizerContainer" class="w-full h-32 rounded-lg overflow-hidden border border-gray-600 bg-black/20">
+                        <canvas id="visualizer" class="block w-full h-full"></canvas>
                     </div>
 
-                    <div class="mt-2 w-full flex justify-center">
-                         <select id="visualizerSelector" class="p-1 text-xs bg-gray-600 text-white rounded-md border-none focus:ring-0">
-                            <option value="none">Nessuno (No USB/HDMI Jitter)</option> 
-                            <option value="waveform">Forma d'Onda (Waveform)</option>
-                            <option value="bars">Barre (Frequency)</option>
-                            <option value="circles">Cerchi (Energy)</option>
+                    <div class="mt-3">
+                         <select id="visualizerSelector" class="p-1 text-[10px] bg-gray-600 text-white rounded border-none uppercase tracking-widest focus:ring-0 cursor-pointer hover:bg-gray-500 transition">
+                            <option value="none">Off (Direct Audio)</option> 
+                            <option value="waveform">Waveform</option>
+                            <option value="bars">Frequencies</option>
+                            <option value="circles">Energy Rings</option>
                         </select>
                     </div>
-
                 </div>
 
-                <div class="flex items-center justify-center w-full mt-4">
+                <div class="flex items-center justify-center w-full mt-2">
                     <div class="flex flex-col items-center justify-center mr-8 relative w-8 h-32">
-                        <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.75" class="rounded-full absolute">
-                        <button id="muteToggleBtn" class="text-gray-700 hover:text-red-500 transition duration-150 absolute">
+                        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.75" class="rounded-full">
+                        <button id="muteToggleBtn" class="mt-4 text-gray-700 hover:text-blue-500 transition">
                             <i class="fas fa-volume-up"></i>
                         </button>
                     </div>
 
-                    <div class="relative w-48 h-48 bg-gray-300 rounded-full shadow-2xl flex items-center justify-center">
-                        <div class="absolute w-48 h-48 bg-gray-200 rounded-full flex items-center justify-center">
-                            
-                            <button id="prevBtn" class="absolute left-0 w-16 h-16 flex items-center justify-center -translate-x-1/2 text-gray-700 hover:text-blue-500 transition duration-150">
-                                <i class="fas fa-backward fa-xl"></i>
-                            </button>
-                            
-                            <button id="nextBtn" class="absolute right-0 w-16 h-16 flex items-center justify-center translate-x/2 text-gray-700 hover:text-blue-500 transition duration-150">
-                                <i class="fas fa-forward fa-xl"></i>
-                            </button>
-                            
-                            <button id="shuffleBtn" class="absolute top-0 w-16 h-16 flex items-center justify-center -translate-y-1/2 text-gray-700 hover:text-purple-500 transition duration-150">
-                                <i class="fas fa-random fa-xl"></i>
-                            </button>
-                            
-                            <button id="menuBtn" class="absolute bottom-0 w-16 h-16 flex items-center justify-center translate-y-1/2 text-gray-700 hover:text-green-500 transition duration-150" title="Placeholder per Menu/Dettagli">
-                                <i class="fas fa-list fa-xl"></i> 
-                            </button>
-                        </div>
-
-                        <button id="playPauseBtn" class="w-20 h-20 bg-gray-500 rounded-full shadow-inner flex items-center justify-center text-white hover:bg-gray-600 transition duration-150 z-10">
+                    <div class="relative w-48 h-48 bg-gray-300 rounded-full shadow-2xl flex items-center justify-center border-4 border-gray-400">
+                        <button id="shuffleBtn" class="absolute top-4 text-gray-600 hover:text-purple-600 transition"><i class="fas fa-random fa-lg"></i></button>
+                        <button id="prevBtn" class="absolute left-4 text-gray-600 hover:text-blue-600 transition"><i class="fas fa-backward fa-lg"></i></button>
+                        <button id="nextBtn" class="absolute right-4 text-gray-600 hover:text-blue-600 transition"><i class="fas fa-forward fa-lg"></i></button>
+                        <button id="menuBtn" class="absolute bottom-4 text-gray-600 hover:text-gray-900 transition"><i class="fas fa-bars fa-lg"></i></button>
+                        
+                        <button id="playPauseBtn" class="w-20 h-20 bg-blue-600 rounded-full shadow-inner flex items-center justify-center text-white hover:bg-blue-700 transition active:scale-95 z-10">
                             <i id="playPauseIcon" class="fas fa-play fa-2xl"></i> 
                         </button>
                     </div>
@@ -132,15 +99,18 @@
             </section>
         </main>
 
-        <section class="mt-8">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">Playlist Corrente</h2>
-            <ul id="playlist" class="space-y-2 max-h-72 overflow-y-auto pr-2 bg-gray-100 p-3 rounded-xl">
+        <section class="mt-8 border-t pt-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-700">Coda di riproduzione</h2>
+                <span id="playlistCount" class="text-xs bg-gray-200 px-2 py-1 rounded-full text-gray-500">0 brani</span>
+            </div>
+            <ul id="playlist" class="space-y-2 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
                 </ul>
         </section>
 
     </div>
-    
 
-    <script type="module" src="{% static 'music_player/app.js' %}"></script>
+    <script type="module" src="{% static 'music_player/js/app.js' %}"></script>
+
 </body>
 </html>
