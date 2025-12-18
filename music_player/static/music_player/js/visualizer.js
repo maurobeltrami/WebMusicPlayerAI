@@ -1,33 +1,22 @@
-// visualizer.js - Web Audio API e Canvas
-export let audioContext = null;
-export let analyser = null;
-export let source = null;
+// visualizer.js - Solo logica di rendering grafica
 
-export async function setupVisualizer(audioPlayer, canvas, type) {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        analyser.smoothingTimeConstant = 0.8;
-        source = audioContext.createMediaElementSource(audioPlayer);
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-    }
-    updateFFT(type);
-}
-
-export function updateFFT(type) {
-    if (!analyser) return;
-    analyser.fftSize = (type === 'waveform') ? 2048 : (type === 'circles' ? 512 : 256);
-}
-
-export function draw(ctx, canvas, type, isPlaying, frame) {
+/**
+ * Funzione principale di disegno. 
+ * Riceve l'analyser direttamente da audio-engine.js
+ */
+export function draw(ctx, canvas, type, isPlaying, frame, analyser) {
     const W = canvas.width;
     const H = canvas.height;
+
+    // Sfondo scuro costante
     ctx.fillStyle = 'rgb(31, 41, 55)';
     ctx.fillRect(0, 0, W, H);
 
-    if (type === 'none' || !analyser) {
-        ctx.font = "16px Inter"; ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.textAlign = "center";
+    // Se il visualizzatore è spento o non c'è segnale audio
+    if (type === 'none' || !analyser || !isPlaying) {
+        ctx.font = "16px Inter";
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.textAlign = "center";
         ctx.fillText("VISUALIZZATORE DISATTIVATO", W / 2, H / 2);
         return;
     }
@@ -35,6 +24,7 @@ export function draw(ctx, canvas, type, isPlaying, frame) {
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
+    // Selezione del tipo di visualizzazione
     if (type === 'waveform') {
         analyser.getByteTimeDomainData(dataArray);
         drawWaveform(ctx, dataArray, W, H, frame);
@@ -44,6 +34,16 @@ export function draw(ctx, canvas, type, isPlaying, frame) {
         if (type === 'circles') drawCircles(ctx, dataArray, W, H, frame);
     }
 }
+
+/**
+ * Aggiorna la precisione dell'analizzatore in base alla modalità
+ */
+export function updateFFT(analyser, type) {
+    if (!analyser) return;
+    analyser.fftSize = (type === 'waveform') ? 2048 : (type === 'circles' ? 512 : 256);
+}
+
+// --- FUNZIONI DI DISEGNO INTERNE ---
 
 function drawWaveform(ctx, data, W, H, frame) {
     ctx.lineWidth = 2;
@@ -65,6 +65,7 @@ function drawBars(ctx, data, W, H) {
     let x = 0;
     for (let i = 0; i < data.length; i++) {
         let barHeight = (data[i] / 255) * H;
+        // Gradiente dal blu al viola
         ctx.fillStyle = `hsl(${(i / data.length) * 120 + 240}, 100%, 50%)`;
         ctx.fillRect(x, H - barHeight, barWidth, barHeight);
         x += barWidth + 1;
@@ -73,6 +74,7 @@ function drawBars(ctx, data, W, H) {
 
 function drawCircles(ctx, data, W, H, frame) {
     const centerX = W / 2, centerY = H / 2;
+    ctx.lineWidth = 2;
     for (let i = 0; i < 10; i++) {
         const radius = (i / 10) * (Math.min(W, H) / 2) + (data[i * 5] / 255) * 20;
         ctx.beginPath();
