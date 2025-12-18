@@ -2,7 +2,7 @@ import * as ui from './ui.js';
 import * as vis from './visualizer.js';
 import * as playerTools from './player.js';
 import * as filterTools from './filters.js';
-import * as audioEngine from './audio-engine.js'; // Nuovo import
+import * as audioEngine from './audio-engine.js';
 
 // --- STATO GLOBALE ---
 let fullLibrary = [];
@@ -29,7 +29,6 @@ function loadTrack(index, autoPlay = isPlaying) {
     if (audioPlayer.src !== finalSrc) {
         audioPlayer.src = finalSrc;
         audioPlayer.load();
-        console.log("Audio caricato via modulo:", finalSrc);
     }
 
     document.getElementById('currentTrack').textContent = `${track.title} - ${track.artist}`;
@@ -40,7 +39,7 @@ function loadTrack(index, autoPlay = isPlaying) {
                 isPlaying = true;
                 playPauseIcon.classList.replace('fa-play', 'fa-pause');
             })
-            .catch(e => console.warn("Interazione richiesta per autoplay"));
+            .catch(e => console.warn("Interazione richiesta"));
     }
     renderUI();
 }
@@ -70,7 +69,6 @@ function applyFilters() {
 
 function toggleShuffle() {
     if (currentPlaylist.length === 0) return;
-
     isShuffling = !isShuffling;
     const shuffleBtn = document.getElementById('shuffleBtn');
 
@@ -90,7 +88,6 @@ function toggleShuffle() {
 async function togglePlayPause() {
     if (currentPlaylist.length === 0) return;
 
-    // INIZIALIZZA MOTORE AUDIO E COMPRESSORE AL PRIMO PLAY
     if (!audioEngine.audioContext) {
         await audioEngine.initAudio(audioPlayer);
     }
@@ -139,6 +136,19 @@ document.getElementById('volumeSlider').addEventListener('input', (e) => {
     audioPlayer.volume = val;
 });
 
+// LISTENERS PER IL COMPRESSORE
+document.getElementById('thresholdSlider').addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    document.getElementById('thresholdVal').textContent = val;
+    audioEngine.updateCompressor('threshold', val);
+});
+
+document.getElementById('ratioSlider').addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    document.getElementById('ratioVal').textContent = val;
+    audioEngine.updateCompressor('ratio', val);
+});
+
 audioPlayer.addEventListener('timeupdate', () => {
     const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
     const pBar = document.getElementById('progressBar');
@@ -153,7 +163,6 @@ audioPlayer.addEventListener('ended', () => loadTrack(currentTrackIndex + 1, tru
 let frame = 0;
 function animate() {
     if (ctx && canvas) {
-        // Passiamo l'analyser dal motore audio al visualizzatore
         const type = document.getElementById('visualizerSelector').value;
         vis.draw(ctx, canvas, type, isPlaying, frame++, audioEngine.analyser);
     }
@@ -174,10 +183,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
         loadTrack(0, false);
         animate();
-
         aiStatus.textContent = "Libreria Pronta";
     } catch (e) {
         aiStatus.textContent = "Errore API";
-        console.error(e);
     }
 });
