@@ -13,6 +13,21 @@ let isPlaying = false;
 let isShuffling = false;
 let trackTargetId = null;
 
+// --- FUNZIONE SHUFFLE PROFESSIONALE (Fisher-Yates) ---
+function shuffleArray(array) {
+    let currentIndex = array.length, randomIndex;
+    // Finché ci sono elementi da mescolare...
+    while (currentIndex !== 0) {
+        // Scegli un elemento rimanente...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        // E scambialo con l'elemento attuale.
+        [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex], array[currentIndex]];
+    }
+    return array;
+}
+
 // --- ELEMENTI DOM ---
 const audioPlayer = document.getElementById('audioPlayer');
 const canvas = document.getElementById('visualizer');
@@ -47,7 +62,6 @@ async function fetchPlaylists() {
         const data = await res.json();
         const list = document.getElementById('savedPlaylistsList');
 
-        // Render della lista nel Modal con distinzione tra Carica (ascolta) e Modifica
         list.innerHTML = data.map(pl => `
             <li class="flex flex-col bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2">
                 <div class="flex justify-between items-center">
@@ -73,7 +87,6 @@ async function fetchPlaylists() {
             selector.add(new Option(`${pl.name} (${pl.tracks.length})`, pl.name));
         });
 
-        // Eventi
         document.querySelectorAll('.load-pl-btn').forEach(btn => {
             btn.onclick = () => loadSavedPlaylist(data.find(p => p.name === btn.dataset.name));
         });
@@ -86,7 +99,6 @@ async function fetchPlaylists() {
     } catch (err) { console.error(err); }
 }
 
-// Funzione per caricare i brani della playlist nel form di creazione senza chiudere il menu
 function prepareEditPlaylist(plData) {
     if (!plData) return;
     document.getElementById('playlistNameInput').value = plData.name;
@@ -159,7 +171,7 @@ async function saveCurrentPlaylist() {
         });
         document.getElementById('playlistNameInput').value = '';
         fetchPlaylists();
-        renderTrackSelection(); // Reset della lista checkbox
+        renderTrackSelection();
         aiStatus.textContent = "Salvataggio completato!";
     } catch (err) { console.error(err); }
 }
@@ -247,12 +259,14 @@ document.getElementById('volumeSlider').oninput = (e) => {
     audioPlayer.volume = e.target.value;
 };
 
+// LOGICA SHUFFLE POTENZIATA (FISHER-YATES)
 document.getElementById('shuffleBtn').onclick = () => {
     if (currentPlaylist.length < 2) return;
     isShuffling = !isShuffling;
     const currentTrack = currentPlaylist[currentTrackIndex];
     if (isShuffling) {
-        currentPlaylist = [...currentPlaylist].sort(() => Math.random() - 0.5);
+        // Usa l'algoritmo Fisher-Yates per un mescolamento vero
+        currentPlaylist = shuffleArray([...currentPlaylist]);
     } else {
         currentPlaylist = [...originalPlaylistOrder].filter(t => currentPlaylist.includes(t));
     }
