@@ -7,6 +7,7 @@ import * as audioEngine from './audio-engine.js';
 // --- STATO GLOBALE ---
 let fullLibrary = [];
 let currentPlaylist = [];
+let originalPlaylistOrder = [];
 let currentTrackIndex = 0;
 let isPlaying = false;
 let isShuffling = false;
@@ -21,7 +22,7 @@ const playPauseIcon = document.getElementById('playPauseIcon');
 
 // --- LOGICA PLAYLIST (.JSON) ---
 
-function renderTrackSelection(filterText = '') {
+function renderTrackSelection(filterText = '', selectedIds = []) {
     const container = document.getElementById('trackSelectionList');
     if (!container) return;
     const filtered = fullLibrary.filter(t =>
@@ -30,7 +31,8 @@ function renderTrackSelection(filterText = '') {
     );
     container.innerHTML = filtered.map(track => `
         <label class="flex items-center p-2 hover:bg-white rounded cursor-pointer border-b border-gray-100 last:border-0 transition-colors">
-            <input type="checkbox" class="track-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 mr-3" value="${track.id}">
+            <input type="checkbox" class="track-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 mr-3" 
+                   value="${track.id}" ${selectedIds.includes(track.id) ? 'checked' : ''}>
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-semibold text-gray-800 truncate leading-tight">${track.title}</p>
                 <p class="text-[10px] text-gray-500 truncate uppercase tracking-wider">${track.artist}</p>
@@ -44,15 +46,24 @@ async function fetchPlaylists() {
         const res = await fetch('/api/playlists/');
         const data = await res.json();
         const list = document.getElementById('savedPlaylistsList');
+
+        // Render della lista nel Modal con distinzione tra Carica (ascolta) e Modifica
         list.innerHTML = data.map(pl => `
-            <li class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                <button class="load-pl-btn text-left flex-1" data-name="${pl.name}">
+            <li class="flex flex-col bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2">
+                <div class="flex justify-between items-center">
                     <p class="text-sm font-bold text-gray-800">${pl.name}</p>
-                    <p class="text-[10px] text-blue-500 font-bold uppercase">${pl.tracks.length} brani</p>
-                </button>
-                <button class="del-pl-btn text-gray-300 hover:text-red-500 p-2" data-name="${pl.name}">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
+                    <button class="del-pl-btn text-gray-300 hover:text-red-500 p-1" data-name="${pl.name}">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="load-pl-btn bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold flex-1 hover:bg-blue-600 hover:text-white transition-colors" data-name="${pl.name}">
+                        ASCOLTA
+                    </button>
+                    <button class="edit-pl-btn bg-gray-50 text-gray-600 px-2 py-1 rounded text-[10px] font-bold flex-1 hover:bg-orange-500 hover:text-white transition-colors" data-name="${pl.name}">
+                        MODIFICA
+                    </button>
+                </div>
             </li>
         `).join('');
 
@@ -62,13 +73,25 @@ async function fetchPlaylists() {
             selector.add(new Option(`${pl.name} (${pl.tracks.length})`, pl.name));
         });
 
+        // Eventi
         document.querySelectorAll('.load-pl-btn').forEach(btn => {
             btn.onclick = () => loadSavedPlaylist(data.find(p => p.name === btn.dataset.name));
+        });
+        document.querySelectorAll('.edit-pl-btn').forEach(btn => {
+            btn.onclick = () => prepareEditPlaylist(data.find(p => p.name === btn.dataset.name));
         });
         document.querySelectorAll('.del-pl-btn').forEach(btn => {
             btn.onclick = () => deletePlaylist(btn.dataset.name);
         });
     } catch (err) { console.error(err); }
+}
+
+// Funzione per caricare i brani della playlist nel form di creazione senza chiudere il menu
+function prepareEditPlaylist(plData) {
+    if (!plData) return;
+    document.getElementById('playlistNameInput').value = plData.name;
+    renderTrackSelection('', plData.tracks);
+    aiStatus.textContent = `Modifica: ${plData.name}`;
 }
 
 async function openTrackPlaylistModal(trackId) {
@@ -117,6 +140,8 @@ function loadSavedPlaylist(plData) {
     currentPlaylist = plData.tracks
         .map(id => fullLibrary.find(t => t.id === id))
         .filter(t => t !== undefined);
+    originalPlaylistOrder = [...currentPlaylist];
+    isShuffling = false;
     currentTrackIndex = 0;
     loadTrack(0, true);
     document.getElementById('playlistModal').classList.add('hidden');
@@ -134,6 +159,8 @@ async function saveCurrentPlaylist() {
         });
         document.getElementById('playlistNameInput').value = '';
         fetchPlaylists();
+        renderTrackSelection(); // Reset della lista checkbox
+        aiStatus.textContent = "Salvataggio completato!";
     } catch (err) { console.error(err); }
 }
 
@@ -203,7 +230,11 @@ function renderUI() {
         shuffleBtn: document.getElementById('shuffleBtn')
     }, {
         onLoadTrack: (idx) => loadTrack(idx, true),
-        onRemoveTrack: (idx) => { currentPlaylist.splice(idx, 1); renderUI(); },
+        onRemoveTrack: (idx) => {
+            currentPlaylist.splice(idx, 1);
+            originalPlaylistOrder = originalPlaylistOrder.filter(t => currentPlaylist.includes(t));
+            renderUI();
+        },
         onAddToPlaylist: (trackId) => openTrackPlaylistModal(trackId),
         isShuffling: isShuffling
     });
@@ -215,20 +246,18 @@ function renderUI() {
 document.getElementById('volumeSlider').oninput = (e) => {
     audioPlayer.volume = e.target.value;
 };
-document.getElementById('muteToggleBtn').onclick = () => {
-    audioPlayer.muted = !audioPlayer.muted;
-    document.getElementById('muteToggleBtn').innerHTML = audioPlayer.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
-};
 
 document.getElementById('shuffleBtn').onclick = () => {
+    if (currentPlaylist.length < 2) return;
     isShuffling = !isShuffling;
+    const currentTrack = currentPlaylist[currentTrackIndex];
     if (isShuffling) {
         currentPlaylist = [...currentPlaylist].sort(() => Math.random() - 0.5);
     } else {
-        currentPlaylist = [...fullLibrary];
+        currentPlaylist = [...originalPlaylistOrder].filter(t => currentPlaylist.includes(t));
     }
-    currentTrackIndex = 0;
-    loadTrack(0, true);
+    currentTrackIndex = currentPlaylist.indexOf(currentTrack);
+    renderUI();
 };
 
 document.getElementById('thresholdSlider').oninput = (e) => {
@@ -265,21 +294,30 @@ document.getElementById('savedPlaylistSelector').onchange = async (e) => {
         const pl = data.find(p => p.name === plName);
         if (pl) currentPlaylist = pl.tracks.map(id => fullLibrary.find(t => t.id === id)).filter(t => t);
     }
+    originalPlaylistOrder = [...currentPlaylist];
+    isShuffling = false;
+    currentTrackIndex = 0;
     loadTrack(0, true);
 };
 
 document.getElementById('artistFilter').onchange = (e) => {
     currentPlaylist = filterTools.filterLibrary(fullLibrary, e.target.value, '', '');
+    originalPlaylistOrder = [...currentPlaylist];
+    isShuffling = false;
     loadTrack(0, false);
 };
 
 document.getElementById('albumFilter').onchange = (e) => {
     currentPlaylist = filterTools.filterLibrary(fullLibrary, '', e.target.value, '');
+    originalPlaylistOrder = [...currentPlaylist];
+    isShuffling = false;
     loadTrack(0, false);
 };
 
 document.getElementById('searchTrackInput').oninput = (e) => {
     currentPlaylist = filterTools.filterLibrary(fullLibrary, '', '', e.target.value);
+    originalPlaylistOrder = [...currentPlaylist];
+    isShuffling = false;
     renderUI();
 };
 
@@ -311,14 +349,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         const response = await fetch('/api/tracks/');
         fullLibrary = await response.json();
         currentPlaylist = [...fullLibrary];
+        originalPlaylistOrder = [...fullLibrary];
 
-        // POPOLAMENTO FILTRI ARTISTA E ALBUM
         const artSel = document.getElementById('artistFilter');
         const albSel = document.getElementById('albumFilter');
-
         artSel.innerHTML = '<option value="">Tutti gli Artisti</option>';
         albSel.innerHTML = '<option value="">Tutti gli Album</option>';
-
         filterTools.getUniqueMetadata(fullLibrary, 'artist').forEach(a => artSel.add(new Option(a, a)));
         filterTools.getUniqueMetadata(fullLibrary, 'album').forEach(a => albSel.add(new Option(a, a)));
 
