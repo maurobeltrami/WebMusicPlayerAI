@@ -1,12 +1,12 @@
 # core/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings 
-from django.conf.urls.static import static 
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('music_player.urls')),
+    # Questa riga deve essere l'unica per la tua app
     path('', include('music_player.urls')),
 ]
 
