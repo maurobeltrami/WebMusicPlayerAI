@@ -107,27 +107,33 @@
                 <h2 class="text-2xl font-bold text-gray-800">Crea e Gestisci Playlist</h2>
                 <button id="closeModal" class="text-gray-400 hover:text-red-500 text-3xl">&times;</button>
             </div>
-            
             <div class="grid md:grid-cols-2 gap-8 overflow-hidden">
                 <div class="flex flex-col overflow-hidden text-gray-500 font-bold uppercase text-[10px]">
                     <h3 class="mb-4">Nuova Playlist (Seleziona brani)</h3>
                     <input type="text" id="playlistNameInput" placeholder="Nome playlist..." class="w-full p-2 border rounded mb-2 text-base font-normal">
                     <input type="text" id="modalSearchInput" placeholder="Filtra brani..." class="w-full p-2 border rounded mb-2 text-base font-normal">
-                    
-                    <div id="trackSelectionList" class="flex-1 overflow-y-auto border rounded bg-gray-50 p-2 min-h-[300px]">
-                        </div>
-                    
+                    <div id="trackSelectionList" class="flex-1 overflow-y-auto border rounded bg-gray-50 p-2 min-h-[300px]"></div>
                     <button id="savePlaylistBtn" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-sm tracking-widest transition-colors">
                         SALVA PLAYLIST (.JSON)
                     </button>
                 </div>
-
                 <div class="flex flex-col overflow-hidden text-gray-500 font-bold uppercase text-[10px]">
                     <h3 class="mb-4">Archivio Playlist (Disco)</h3>
-                    <ul id="savedPlaylistsList" class="flex-1 overflow-y-auto border-l pl-4 space-y-2 min-h-[300px]">
-                        </ul>
+                    <ul id="savedPlaylistsList" class="flex-1 overflow-y-auto border-l pl-4 space-y-2 min-h-[300px]"></ul>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="trackPlaylistModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-xs p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800">Aggiungi a...</h3>
+                <button id="closeTrackModal" class="text-gray-400 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div id="trackPlaylistOptions" class="space-y-3 max-h-64 overflow-y-auto">
+                </div>
+            <p class="text-[10px] text-gray-400 mt-4 italic text-center">Modifiche salvate automaticamente.</p>
         </div>
     </div>
 
