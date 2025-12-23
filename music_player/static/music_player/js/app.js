@@ -15,17 +15,12 @@ let trackTargetId = null;
 
 // --- FUNZIONE SHUFFLE PROFESSIONALE (Fisher-Yates) ---
 function shuffleArray(array) {
-    let currentIndex = array.length, randomIndex;
-    // Finché ci sono elementi da mescolare...
-    while (currentIndex !== 0) {
-        // Scegli un elemento rimanente...
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex--;
-        // E scambialo con l'elemento attuale.
-        [array[currentIndex], array[randomIndex]] = [
-            array[randomIndex], array[currentIndex]];
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    return array;
+    return arr;
 }
 
 // --- ELEMENTI DOM ---
@@ -35,7 +30,7 @@ const ctx = canvas ? canvas.getContext('2d') : null;
 const aiStatus = document.getElementById('aiStatus');
 const playPauseIcon = document.getElementById('playPauseIcon');
 
-// --- LOGICA PLAYLIST (.JSON) ---
+// --- LOGICA PLAYLIST ---
 
 function renderTrackSelection(filterText = '', selectedIds = []) {
     const container = document.getElementById('trackSelectionList');
@@ -45,12 +40,12 @@ function renderTrackSelection(filterText = '', selectedIds = []) {
         t.artist.toLowerCase().includes(filterText.toLowerCase())
     );
     container.innerHTML = filtered.map(track => `
-        <label class="flex items-center p-2 hover:bg-white rounded cursor-pointer border-b border-gray-100 last:border-0 transition-colors">
-            <input type="checkbox" class="track-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 mr-3" 
+        <label class="flex items-center p-3 hover:bg-blue-50 rounded-xl cursor-pointer border-b border-gray-100 transition-colors">
+            <input type="checkbox" class="track-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 mr-4" 
                    value="${track.id}" ${selectedIds.includes(track.id) ? 'checked' : ''}>
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-semibold text-gray-800 truncate leading-tight">${track.title}</p>
-                <p class="text-[10px] text-gray-500 truncate uppercase tracking-wider">${track.artist}</p>
+                <p class="text-sm font-bold text-gray-800 truncate">${track.title}</p>
+                <p class="text-[10px] text-gray-500 uppercase tracking-tighter">${track.artist}</p>
             </div>
         </label>
     `).join('');
@@ -63,18 +58,18 @@ async function fetchPlaylists() {
         const list = document.getElementById('savedPlaylistsList');
 
         list.innerHTML = data.map(pl => `
-            <li class="flex flex-col bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-2">
+            <li class="flex flex-col bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-3">
                 <div class="flex justify-between items-center">
                     <p class="text-sm font-bold text-gray-800">${pl.name}</p>
-                    <button class="del-pl-btn text-gray-300 hover:text-red-500 p-1" data-name="${pl.name}">
-                        <i class="fas fa-trash-alt text-xs"></i>
+                    <button class="del-pl-btn text-gray-300 hover:text-red-500 transition-colors" data-name="${pl.name}">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
-                <div class="flex space-x-2">
-                    <button class="load-pl-btn bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold flex-1 hover:bg-blue-600 hover:text-white transition-colors" data-name="${pl.name}">
+                <div class="flex gap-2">
+                    <button class="load-pl-btn bg-blue-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold flex-1 shadow-sm active:scale-95" data-name="${pl.name}">
                         ASCOLTA
                     </button>
-                    <button class="edit-pl-btn bg-gray-50 text-gray-600 px-2 py-1 rounded text-[10px] font-bold flex-1 hover:bg-orange-500 hover:text-white transition-colors" data-name="${pl.name}">
+                    <button class="edit-pl-btn bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-[10px] font-bold flex-1 border border-gray-200 active:scale-95" data-name="${pl.name}">
                         MODIFICA
                     </button>
                 </div>
@@ -103,7 +98,7 @@ function prepareEditPlaylist(plData) {
     if (!plData) return;
     document.getElementById('playlistNameInput').value = plData.name;
     renderTrackSelection('', plData.tracks);
-    aiStatus.textContent = `Modifica: ${plData.name}`;
+    aiStatus.textContent = `Editing: ${plData.name}`;
 }
 
 async function openTrackPlaylistModal(trackId) {
@@ -116,9 +111,9 @@ async function openTrackPlaylistModal(trackId) {
         const res = await fetch('/api/playlists/');
         const playlists = await res.json();
         container.innerHTML = playlists.map(pl => `
-            <label class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
-                <span class="text-sm font-medium text-gray-700">${pl.name}</span>
-                <input type="checkbox" class="playlist-check w-5 h-5" data-plname="${pl.name}" ${pl.tracks.includes(trackId) ? 'checked' : ''}>
+            <label class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl cursor-pointer border border-transparent hover:border-blue-100 transition-all">
+                <span class="text-sm font-semibold text-gray-700">${pl.name}</span>
+                <input type="checkbox" class="playlist-check w-5 h-5 accent-blue-600" data-plname="${pl.name}" ${pl.tracks.includes(trackId) ? 'checked' : ''}>
             </label>
         `).join('');
         document.querySelectorAll('.playlist-check').forEach(check => {
@@ -160,24 +155,28 @@ function loadSavedPlaylist(plData) {
 }
 
 async function saveCurrentPlaylist() {
-    const name = document.getElementById('playlistNameInput').value.trim();
+    const nameInput = document.getElementById('playlistNameInput');
+    const name = nameInput.value.trim();
     const selectedIds = Array.from(document.querySelectorAll('.track-checkbox:checked')).map(cb => cb.value);
-    if (!name || selectedIds.length === 0) return alert("Inserisci nome e brani");
+
+    if (!name || selectedIds.length === 0) return alert("Inserisci un nome e seleziona almeno un brano");
+
     try {
         await fetch('/api/playlists/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
             body: JSON.stringify({ name, tracks: selectedIds })
         });
-        document.getElementById('playlistNameInput').value = '';
+        nameInput.value = '';
+        document.getElementById('modalSearchInput').value = '';
         fetchPlaylists();
         renderTrackSelection();
-        aiStatus.textContent = "Salvataggio completato!";
+        aiStatus.textContent = "Playlist Salvata!";
     } catch (err) { console.error(err); }
 }
 
 async function deletePlaylist(name) {
-    if (!confirm(`Eliminare "${name}"?`)) return;
+    if (!confirm(`Eliminare definitivamente "${name}"?`)) return;
     await fetch(`/api/playlists/?name=${name}`, { method: 'DELETE', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
     fetchPlaylists();
 }
@@ -243,8 +242,8 @@ function renderUI() {
     }, {
         onLoadTrack: (idx) => loadTrack(idx, true),
         onRemoveTrack: (idx) => {
-            currentPlaylist.splice(idx, 1);
-            originalPlaylistOrder = originalPlaylistOrder.filter(t => currentPlaylist.includes(t));
+            const removed = currentPlaylist.splice(idx, 1)[0];
+            originalPlaylistOrder = originalPlaylistOrder.filter(t => t.id !== removed.id);
             renderUI();
         },
         onAddToPlaylist: (trackId) => openTrackPlaylistModal(trackId),
@@ -259,14 +258,12 @@ document.getElementById('volumeSlider').oninput = (e) => {
     audioPlayer.volume = e.target.value;
 };
 
-// LOGICA SHUFFLE POTENZIATA (FISHER-YATES)
 document.getElementById('shuffleBtn').onclick = () => {
     if (currentPlaylist.length < 2) return;
     isShuffling = !isShuffling;
     const currentTrack = currentPlaylist[currentTrackIndex];
     if (isShuffling) {
-        // Usa l'algoritmo Fisher-Yates per un mescolamento vero
-        currentPlaylist = shuffleArray([...currentPlaylist]);
+        currentPlaylist = shuffleArray(currentPlaylist);
     } else {
         currentPlaylist = [...originalPlaylistOrder].filter(t => currentPlaylist.includes(t));
     }
@@ -279,6 +276,7 @@ document.getElementById('thresholdSlider').oninput = (e) => {
     document.getElementById('thresholdVal').textContent = val;
     if (audioEngine.audioContext) audioEngine.updateCompressor('threshold', val);
 };
+
 document.getElementById('ratioSlider').oninput = (e) => {
     const val = parseFloat(e.target.value);
     document.getElementById('ratioVal').textContent = val;
@@ -288,11 +286,13 @@ document.getElementById('ratioSlider').oninput = (e) => {
 document.getElementById('playPauseBtn').onclick = togglePlayPause;
 document.getElementById('nextBtn').onclick = () => loadTrack(currentTrackIndex + 1, true);
 document.getElementById('prevBtn').onclick = () => loadTrack(currentTrackIndex - 1, true);
+
 document.getElementById('menuBtn').onclick = () => {
     document.getElementById('playlistModal').classList.remove('hidden');
     fetchPlaylists();
     renderTrackSelection();
 };
+
 document.getElementById('closeModal').onclick = () => document.getElementById('playlistModal').classList.add('hidden');
 document.getElementById('closeTrackModal').onclick = () => document.getElementById('trackPlaylistModal').classList.add('hidden');
 document.getElementById('savePlaylistBtn').onclick = saveCurrentPlaylist;
@@ -310,7 +310,6 @@ document.getElementById('savedPlaylistSelector').onchange = async (e) => {
     }
     originalPlaylistOrder = [...currentPlaylist];
     isShuffling = false;
-    currentTrackIndex = 0;
     loadTrack(0, true);
 };
 
