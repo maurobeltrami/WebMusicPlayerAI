@@ -12,15 +12,19 @@ let currentTrackIndex = 0;
 let isPlaying = false;
 let isShuffling = false;
 let trackTargetId = null;
+let currentCoverUrl = null;
 
 // --- ELEMENTI DOM ---
 const audioPlayer = document.getElementById('audioPlayer');
+// IMPORTANTE: Assicuriamoci che l'audio player accetti l'analisi dei dati
+audioPlayer.crossOrigin = "anonymous";
+
 const canvas = document.getElementById('visualizer');
 const ctx = canvas ? canvas.getContext('2d') : null;
 const aiStatus = document.getElementById('aiStatus');
 const playPauseIcon = document.getElementById('playPauseIcon');
 
-// --- LOGICA PLAYLIST ---
+// --- LOGICA PLAYLIST (Mantenuta come tua) ---
 
 function renderTrackSelection(filterText = '', selectedIds = []) {
     const container = document.getElementById('trackSelectionList');
@@ -46,6 +50,7 @@ async function fetchPlaylists() {
         const res = await fetch('/api/playlists/');
         const data = await res.json();
         const list = document.getElementById('savedPlaylistsList');
+        if (!list) return;
 
         list.innerHTML = data.map(pl => `
             <li class="flex flex-col bg-white p-3 rounded-xl border border-gray-200 shadow-sm space-y-3">
@@ -67,10 +72,12 @@ async function fetchPlaylists() {
         `).join('');
 
         const selector = document.getElementById('savedPlaylistSelector');
-        selector.innerHTML = '<option value="all">Tutta la Libreria</option>';
-        data.forEach(pl => {
-            selector.add(new Option(`${pl.name} (${pl.tracks.length})`, pl.name));
-        });
+        if (selector) {
+            selector.innerHTML = '<option value="all">Tutta la Libreria</option>';
+            data.forEach(pl => {
+                selector.add(new Option(`${pl.name} (${pl.tracks.length})`, pl.name));
+            });
+        }
 
         document.querySelectorAll('.load-pl-btn').forEach(btn => {
             btn.onclick = () => loadSavedPlaylist(data.find(p => p.name === btn.dataset.name));
@@ -192,28 +199,36 @@ function loadTrack(index, autoPlay = isPlaying) {
     if (currentPlaylist.length === 0) return;
     currentTrackIndex = (index + currentPlaylist.length) % currentPlaylist.length;
     const track = currentPlaylist[currentTrackIndex];
+
+    // Logica Copertina
+    const trackBaseUrl = track.url.substring(0, track.url.lastIndexOf('/') + 1);
+    currentCoverUrl = trackBaseUrl + "cover.jpg";
+
     audioPlayer.src = playerTools.getFinalAudioSrc(track.url);
     audioPlayer.load();
     document.getElementById('currentTrack').textContent = `${track.title} - ${track.artist}`;
+
     if (autoPlay) {
         audioPlayer.play().then(() => {
             isPlaying = true;
             playPauseIcon.classList.replace('fa-play', 'fa-pause');
-        }).catch(() => { });
+        }).catch(() => { isPlaying = false; });
     }
     renderUI();
 }
 
 async function togglePlayPause() {
     if (currentPlaylist.length === 0) return;
+
+    // Inizializza l'audio context se non esiste (necessario per visualizzatore)
     if (!audioEngine.audioContext) {
         await audioEngine.initAudio(audioPlayer);
         audioEngine.updateCompressor('threshold', parseFloat(document.getElementById('thresholdSlider').value));
         audioEngine.updateCompressor('ratio', parseFloat(document.getElementById('ratioSlider').value));
-        audioPlayer.volume = document.getElementById('volumeSlider').value;
     }
+
     if (audioPlayer.paused) {
-        audioPlayer.play();
+        await audioPlayer.play();
         isPlaying = true;
         playPauseIcon.classList.replace('fa-play', 'fa-pause');
     } else {
@@ -349,7 +364,8 @@ let frame = 0;
 function animate() {
     if (ctx && canvas) {
         const type = document.getElementById('visualizerSelector').value;
-        vis.renderVisualizer(ctx, canvas, type, isPlaying, frame++, audioEngine.analyser);
+        // Passiamo l'analyser da audioEngine
+        vis.renderVisualizer(ctx, canvas, type, isPlaying, frame++, audioEngine.analyser, currentCoverUrl);
     }
     requestAnimationFrame(animate);
 }
@@ -363,14 +379,19 @@ window.addEventListener('DOMContentLoaded', async () => {
 
         const artSel = document.getElementById('artistFilter');
         const albSel = document.getElementById('albumFilter');
-        artSel.innerHTML = '<option value="">Tutti gli Artisti</option>';
-        albSel.innerHTML = '<option value="">Tutti gli Album</option>';
-        filterTools.getUniqueMetadata(fullLibrary, 'artist').forEach(a => artSel.add(new Option(a, a)));
-        filterTools.getUniqueMetadata(fullLibrary, 'album').forEach(a => albSel.add(new Option(a, a)));
+        if (artSel && albSel) {
+            artSel.innerHTML = '<option value="">Tutti gli Artisti</option>';
+            albSel.innerHTML = '<option value="">Tutti gli Album</option>';
+            filterTools.getUniqueMetadata(fullLibrary, 'artist').forEach(a => artSel.add(new Option(a, a)));
+            filterTools.getUniqueMetadata(fullLibrary, 'album').forEach(a => albSel.add(new Option(a, a)));
+        }
 
         await fetchPlaylists();
         loadTrack(0, false);
         animate();
         aiStatus.textContent = "MauroMusic Pronto";
-    } catch (e) { aiStatus.textContent = "Errore Init"; }
+    } catch (e) {
+        console.error(e);
+        aiStatus.textContent = "Errore Init";
+    }
 });
