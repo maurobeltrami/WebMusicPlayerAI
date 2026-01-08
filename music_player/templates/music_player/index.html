@@ -16,7 +16,7 @@
         
         <header class="mb-6 flex justify-between items-center border-b pb-4">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-800 italic tracking-tighter">Mauro<span class="text-blue-600">Music</span></h1>
-            <div class="text-[10px] md:text-sm font-medium text-gray-500" id="aiStatus">In attesa...</div>
+            <div class="text-[10px] md:text-sm font-medium text-gray-500" id="aiStatus">Inizializzazione...</div>
         </header>
 
         <main class="grid lg:grid-cols-3 gap-8">
@@ -43,7 +43,7 @@
             
             <section class="lg:col-span-2 p-4 bg-gray-200 rounded-xl shadow-lg flex flex-col items-center">
                 <div id="displayScreen" class="w-full p-2 bg-gray-700 rounded-xl shadow-2xl mb-4 flex flex-col items-center justify-center border-4 border-gray-800" style="min-height: 480px;">
-                    <p id="currentTrack" class="text-center text-sm font-medium text-white mb-2 truncate px-4 w-full">Nessun brano</p>
+                    <p id="currentTrack" class="text-center text-sm font-medium text-white mb-2 truncate px-4 w-full">Caricamento...</p>
                     <div class="w-full px-4 mb-1">
                         <div id="progressControl" class="w-full h-2 bg-gray-500 rounded-full cursor-pointer relative">
                             <div id="progressBar" class="h-full bg-blue-400 rounded-full pointer-events-none" style="width: 0%;"></div>
@@ -64,13 +64,14 @@
                             <option value="none">Off</option>
                         </select>
                     </div>
+
                     <div class="w-full mt-4 px-4 py-2 bg-black/30 rounded-lg border border-white/10 grid grid-cols-2 gap-4">
                         <div>
-                            <label class="text-[8px] text-gray-400 block uppercase">Threshold: <span id="thresholdVal" class="text-white">-24</span>dB</label>
+                            <label class="text-[8px] text-gray-400 block uppercase">Threshold: <span id="thresholdVal">-24</span>dB</label>
                             <input type="range" id="thresholdSlider" min="-60" max="0" value="-24" class="w-full h-1">
                         </div>
                         <div>
-                            <label class="text-[8px] text-gray-400 block uppercase">Ratio: <span id="ratioVal" class="text-white">12</span>:1</label>
+                            <label class="text-[8px] text-gray-400 block uppercase">Ratio: <span id="ratioVal">12</span>:1</label>
                             <input type="range" id="ratioSlider" min="1" max="20" value="12" class="w-full h-1">
                         </div>
                     </div>
@@ -79,24 +80,24 @@
                 <div class="flex items-center justify-center w-full mt-2">
                     <div class="flex flex-col items-center justify-center mr-4 md:mr-8 relative w-8 h-32">
                         <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.75" class="accent-blue-600">
-                        <button id="muteToggleBtn" class="mt-4 text-gray-700"><i class="fas fa-volume-up"></i></button>
                     </div>
                     <div class="relative w-40 h-40 md:w-48 md:h-48 bg-gray-300 rounded-full shadow-2xl flex items-center justify-center border-4 border-gray-400">
-                        <button id="shuffleBtn" class="absolute top-4 text-gray-600 transition-colors"><i class="fas fa-random fa-lg"></i></button>
+                        <button id="shuffleBtn" class="absolute top-4 text-gray-600"><i class="fas fa-random fa-lg"></i></button>
                         <button id="prevBtn" class="absolute left-4 text-gray-600"><i class="fas fa-backward fa-lg"></i></button>
                         <button id="nextBtn" class="absolute right-4 text-gray-600"><i class="fas fa-forward fa-lg"></i></button>
                         <button id="menuBtn" class="absolute bottom-4 text-gray-600"><i class="fas fa-bars fa-lg"></i></button>
-                        <button id="playPauseBtn" class="w-16 h-16 md:w-20 md:h-20 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg transition-transform">
+                        
+                        <button id="playPauseBtn" class="w-16 h-16 md:w-20 md:h-20 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg transition-transform active:scale-90">
                             <i id="playPauseIcon" class="fas fa-play fa-xl"></i> 
                         </button>
                     </div>
                 </div>
-                <audio id="audioPlayer" crossorigin="anonymous" class="hidden"></audio>
+                <audio id="audioPlayer" crossorigin="anonymous"></audio>
             </section>
         </main>
 
         <section class="mt-8 border-t pt-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Coda di riproduzione <span id="playlistCount" class="text-xs bg-gray-200 px-2 rounded-full">0</span></h2>
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Coda brani (<span id="playlistCount">0</span>)</h2>
             <ul id="playlist" class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar"></ul>
         </section>
     </div>
@@ -104,39 +105,41 @@
     <div id="playlistModal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-2">
         <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden shadow-2xl">
             <div class="p-4 border-b flex justify-between items-center bg-gray-50">
-                <h2 class="text-xl font-bold text-gray-800">Playlist Manager</h2>
+                <h2 class="text-xl font-bold text-gray-800">Gestione Playlist</h2>
                 <button id="closeModal" class="text-gray-400 hover:text-red-500 text-3xl font-bold">&times;</button>
             </div>
             <div class="flex-1 overflow-y-auto p-4">
                 <div class="grid md:grid-cols-2 gap-8">
                     <div class="flex flex-col h-[400px]">
-                        <h3 class="mb-4 text-blue-600 font-bold uppercase text-[10px]">Brani Disponibili</h3>
-                        <input type="text" id="modalSearchInput" placeholder="Filtra brani..." class="w-full p-2 border rounded mb-2">
+                        <h3 class="mb-2 text-blue-600 font-bold uppercase text-[10px]">Libreria Brani</h3>
+                        <input type="text" id="modalSearchInput" placeholder="Cerca brano..." class="w-full p-2 border rounded mb-2">
                         <div id="trackSelectionList" class="flex-1 overflow-y-auto border rounded bg-gray-50 p-2"></div>
                     </div>
                     <div class="flex flex-col h-[300px]">
-                        <h3 class="mb-4 text-gray-500 font-bold uppercase text-[10px]">Le tue Playlist</h3>
+                        <h3 class="mb-2 text-gray-500 font-bold uppercase text-[10px]">Le tue Playlist</h3>
                         <ul id="savedPlaylistsList" class="flex-1 overflow-y-auto space-y-2"></ul>
                     </div>
                 </div>
             </div>
             <div class="p-4 border-t bg-gray-100 flex flex-col gap-3">
-                <input type="text" id="playlistNameInput" placeholder="Nome della playlist..." class="w-full p-3 border rounded-xl">
-                <button id="savePlaylistBtn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold">SALVA PLAYLIST</button>
+                <input type="text" id="playlistNameInput" placeholder="Nome nuova playlist o seleziona 'Modifica'..." class="w-full p-3 border rounded-xl">
+                <button id="savePlaylistBtn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold active:scale-95 uppercase tracking-widest">Salva Playlist</button>
             </div>
         </div>
     </div>
 
     <div id="trackPlaylistModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-xs p-6 shadow-2xl">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 class="text-lg font-bold text-gray-800">Aggiungi a...</h3>
+        <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-800">Aggiungi a playlist</h3>
                 <button id="closeTrackModal" class="text-gray-400 hover:text-red-500 text-2xl">&times;</button>
             </div>
-            <div id="trackPlaylistOptions" class="space-y-3 max-h-64 overflow-y-auto pr-2"></div>
+            <div id="trackPlaylistList" class="max-h-60 overflow-y-auto">
+                </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     <script type="module" src="{% static 'music_player/js/app.js' %}"></script>
 </body>
 </html>
