@@ -1,15 +1,19 @@
 // filters.js - Gestione della libreria e manipolazione array
+
 /**
  * Filtra la libreria in base ad artista, album e termine di ricerca.
  */
 export function filterLibrary(library, artist, album, search) {
     const searchTerm = search.toLowerCase().trim();
     return library.filter(track => {
-        const matchArtist = artist === 'all' || track.artist === artist;
-        const matchAlbum = album === 'all' || track.album === album;
+        // Usiamo stringa vuota per indicare "Nessun filtro" (Tutti)
+        const matchArtist = artist === "" || track.artist === artist;
+        const matchAlbum = album === "" || track.album === album;
+
         const matchSearch = track.title.toLowerCase().includes(searchTerm) ||
             track.artist.toLowerCase().includes(searchTerm) ||
             track.album.toLowerCase().includes(searchTerm);
+
         return matchArtist && matchAlbum && matchSearch;
     });
 }

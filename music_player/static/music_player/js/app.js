@@ -13,16 +13,6 @@ let isPlaying = false;
 let isShuffling = false;
 let trackTargetId = null;
 
-// --- FUNZIONE SHUFFLE PROFESSIONALE (Fisher-Yates) ---
-function shuffleArray(array) {
-    let arr = [...array];
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
-
 // --- ELEMENTI DOM ---
 const audioPlayer = document.getElementById('audioPlayer');
 const canvas = document.getElementById('visualizer');
@@ -263,7 +253,7 @@ document.getElementById('shuffleBtn').onclick = () => {
     isShuffling = !isShuffling;
     const currentTrack = currentPlaylist[currentTrackIndex];
     if (isShuffling) {
-        currentPlaylist = shuffleArray(currentPlaylist);
+        currentPlaylist = filterTools.shuffleArray(currentPlaylist);
     } else {
         currentPlaylist = [...originalPlaylistOrder].filter(t => currentPlaylist.includes(t));
     }
@@ -310,27 +300,34 @@ document.getElementById('savedPlaylistSelector').onchange = async (e) => {
     }
     originalPlaylistOrder = [...currentPlaylist];
     isShuffling = false;
+    currentTrackIndex = 0;
     loadTrack(0, true);
+    renderUI();
 };
 
 document.getElementById('artistFilter').onchange = (e) => {
     currentPlaylist = filterTools.filterLibrary(fullLibrary, e.target.value, '', '');
     originalPlaylistOrder = [...currentPlaylist];
     isShuffling = false;
+    currentTrackIndex = 0;
     loadTrack(0, false);
+    renderUI();
 };
 
 document.getElementById('albumFilter').onchange = (e) => {
     currentPlaylist = filterTools.filterLibrary(fullLibrary, '', e.target.value, '');
     originalPlaylistOrder = [...currentPlaylist];
     isShuffling = false;
+    currentTrackIndex = 0;
     loadTrack(0, false);
+    renderUI();
 };
 
 document.getElementById('searchTrackInput').oninput = (e) => {
     currentPlaylist = filterTools.filterLibrary(fullLibrary, '', '', e.target.value);
     originalPlaylistOrder = [...currentPlaylist];
     isShuffling = false;
+    currentTrackIndex = 0;
     renderUI();
 };
 
