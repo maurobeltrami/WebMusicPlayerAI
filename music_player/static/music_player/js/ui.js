@@ -65,9 +65,12 @@ export function updatePlaylistView(playlist, currentIndex, isPlaying, elements, 
 
     if (shuffleBtn) {
         if (actions.isShuffling) {
-            shuffleBtn.classList.add('bg-blue-100', 'text-blue-700', 'rounded-full', 'p-2', 'shadow-inner');
+            // Effetto attivo: Blu con ombra interna e rotazione
+            shuffleBtn.classList.add('text-blue-600', 'bg-blue-100', 'rounded-full', 'scale-110', 'shadow-inner');
+            shuffleBtn.classList.remove('text-gray-600');
         } else {
-            shuffleBtn.classList.remove('bg-blue-100', 'text-blue-700', 'rounded-full', 'p-2', 'shadow-inner');
+            shuffleBtn.classList.remove('text-blue-600', 'bg-blue-100', 'rounded-full', 'scale-110', 'shadow-inner');
+            shuffleBtn.classList.add('text-gray-600');
         }
     }
 }
