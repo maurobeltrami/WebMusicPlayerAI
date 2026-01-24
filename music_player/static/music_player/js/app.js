@@ -114,7 +114,13 @@ function loadTrack(index, autoPlay = isPlaying) {
     audioPlayer.load();
 
     document.getElementById('currentTrack').textContent = `${track.title} - ${track.artist}`;
-    currentCoverUrl = track.url.substring(0, track.url.lastIndexOf('/') + 1) + "cover.jpg";
+
+    if (track.cover_url) {
+        currentCoverUrl = playerTools.getFinalAudioSrc(track.cover_url);
+    } else {
+        // Fallback: try to guess standard cover
+        currentCoverUrl = track.url.substring(0, track.url.lastIndexOf('/') + 1) + "cover.jpg";
+    }
 
     if (autoPlay) {
         audioPlayer.play().then(() => {

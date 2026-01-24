@@ -40,12 +40,26 @@ def get_track_metadata(file_path):
             album = audio.get('album', ['Sconosciuto'])[0]
         
         relative_filepath = file_path.relative_to(settings.MUSIC_ROOT)
+        
+        # Cerca una copertina nella stessa cartella
+        cover_url = None
+        try:
+            parent_dir = file_path.parent
+            # Cerca primo file immagine supportato
+            for item in parent_dir.iterdir():
+                if item.is_file() and item.suffix.lower() in ('.jpg', '.jpeg', '.png', '.webp', '.bmp'):
+                    cover_url = f"music_stream/{str(item.relative_to(settings.MUSIC_ROOT))}"
+                    break
+        except Exception:
+            pass
+
         return {
             'id': str(relative_filepath),
             'title': title,
             'artist': artist,
             'album': album,
             'url': f"music_stream/{str(relative_filepath)}",
+            'cover_url': cover_url
         }
     except Exception as e:
         print(f"Errore lettura {file_path.name}: {e}")
