@@ -54,19 +54,69 @@ def get_track_metadata(file_path):
 # --- VIEWS ---
 
 class TrackListView(APIView):
-    """Restituisce la lista di tutti i brani trovati sul disco."""
+    """Restituisce la lista di tutti i brani trovati sul disco (o in una sottocartella)."""
     def get(self, request):
         music_root = Path(settings.MUSIC_ROOT)
         if not music_root.exists():
             return Response({"error": "MUSIC_ROOT non trovata"}, status=500)
-            
+        
+        # Gestione sottocartella opzionale
+        folder_param = request.query_params.get('folder', '')
+        search_root = music_root
+        if folder_param:
+            potential_root = music_root / folder_param
+            # Security check: ensure we stay within lawful bounds
+            try:
+                if music_root in potential_root.resolve().parents or potential_root.resolve() == music_root:
+                     if potential_root.exists() and potential_root.is_dir():
+                        search_root = potential_root
+            except Exception:
+                pass # Fallback to music_root if invalid
+
         tracks_data = []
         # Cerca file audio ricorsivamente
-        for file_path in music_root.glob('**/*'): 
+        for file_path in search_root.glob('**/*'): 
             if file_path.is_file() and file_path.suffix.lower() in ('.mp3', '.wav', '.flac', '.ogg'):
                 track = get_track_metadata(file_path)
                 if track: tracks_data.append(track)
         return Response(tracks_data)
+
+class DirectoryListView(APIView):
+    """Restituisce le sottocartelle di un dato percorso."""
+    def get(self, request):
+        music_root = Path(settings.MUSIC_ROOT)
+        current_path_param = request.query_params.get('path', '')
+        
+        target_dir = music_root
+        if current_path_param:
+            target_dir = music_root / current_path_param
+            
+        # Security check
+        try:
+            resolved_target = target_dir.resolve()
+            if not (resolved_target == music_root or music_root in resolved_target.parents):
+                return Response({"error": "Accesso negato"}, status=403)
+        except Exception:
+             return Response({"error": "Percorso non valido"}, status=400)
+
+        if not target_dir.exists() or not target_dir.is_dir():
+            return Response({"error": "Cartella non trovata"}, status=404)
+
+        directories = []
+        for item in target_dir.iterdir():
+            if item.is_dir() and not item.name.startswith('.'):
+                directories.append({
+                    'name': item.name,
+                    'path': str(item.relative_to(music_root))
+                })
+        
+        # Sort directories a-z
+        directories.sort(key=lambda x: x['name'].lower())
+        
+        return Response({
+            'current_path': current_path_param,
+            'directories': directories
+        })
 
 class MusicStreamView(APIView):
     """Gestisce lo streaming dei file audio permettendo l'accesso alle sottocartelle."""
@@ -78,9 +128,13 @@ class MusicStreamView(APIView):
         mime_type, _ = mimetypes.guess_type(file_path)
         try:
             f = open(file_path, 'rb')
+            # Increase block size to 64KB for better streaming performance
             response = FileResponse(f, content_type=mime_type or 'audio/mpeg')
+            response.block_size = 65536  # 64KB chunk size
             response['Content-Length'] = os.path.getsize(file_path)
             response['Accept-Ranges'] = 'bytes'
+            # Force inline disposition to ensure browser treats it as a stream/displayable media
+            response['Content-Disposition'] = 'inline'
             return response
         except Exception as e:
             return Response({"error": str(e)}, status=500)

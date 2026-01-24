@@ -64,6 +64,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# --- SESSION & COOKIE CONFIGURATION ---
+# Avoid interference with other local Django projects
+SESSION_COOKIE_NAME = 'mauromusic_sessionid'
+CSRF_COOKIE_NAME = 'mauromusic_csrftoken'
+
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [

@@ -217,17 +217,76 @@ safeSetClick('menuBtn', () => {
 
 safeSetClick('closeModal', () => document.getElementById('playlistModal').classList.add('hidden'));
 
+// --- FOLDER NAVIGATION ---
+let currentFolder = '';
+
+async function fetchDirectories(path) {
+    try {
+        const res = await fetch(`/api/directories/?path=${encodeURIComponent(path)}`);
+        if (!res.ok) throw new Error("Errore caricamento cartelle");
+        const data = await res.json();
+
+        const display = document.getElementById('currentDirDisplay');
+        if (display) display.textContent = data.current_path || "/";
+
+        const dirList = document.getElementById('dirList');
+        if (dirList) {
+            dirList.innerHTML = data.directories.map(d => `
+                <div class="dir-item cursor-pointer hover:bg-blue-50 p-1 rounded flex items-center text-xs text-gray-600" data-path="${d.path}">
+                    <i class="fas fa-folder text-yellow-500 mr-2"></i>
+                    <span class="truncate">${d.name}</span>
+                </div>
+            `).join('');
+
+            dirList.querySelectorAll('.dir-item').forEach(el => {
+                el.onclick = () => browseTo(el.dataset.path);
+            });
+        }
+    } catch (e) {
+        console.error("Errore fetchDirectories:", e);
+    }
+}
+
+async function browseTo(path) {
+    currentFolder = path;
+    await fetchDirectories(path);
+    await loadLibrary(path); // Ricarica la libreria filtrata per questa cartella
+}
+
+async function loadLibrary(folder = '') {
+    try {
+        const res = await fetch(`/api/tracks/?folder=${encodeURIComponent(folder)}`);
+        fullLibrary = await res.json();
+        currentPlaylist = [...fullLibrary];
+        originalPlaylistOrder = [...fullLibrary]; // Reset order
+
+        populateFilters();
+        // Reset player state
+        if (currentPlaylist.length > 0) {
+            loadTrack(0, false); // Don't autoplay on folder change
+            document.getElementById('currentTrack').textContent = "Pronto alla riproduzione";
+        } else {
+            document.getElementById('currentTrack').textContent = "Nessun brano trovato in questa cartella";
+            document.getElementById('playlist').innerHTML = '<li class="text-center text-gray-400 text-xs p-2">Cartella vuota</li>';
+        }
+    } catch (err) { console.error("Errore loadLibrary:", err); }
+}
+
+safeSetClick('dirUpBtn', () => {
+    if (!currentFolder) return;
+    // Calcola il percorso genitore
+    const parts = currentFolder.split('/');
+    parts.pop();
+    const parent = parts.join('/');
+    browseTo(parent);
+});
+
 // --- INIT ---
 window.addEventListener('DOMContentLoaded', async () => {
     try {
-        const res = await fetch('/api/tracks/');
-        fullLibrary = await res.json();
-        currentPlaylist = [...fullLibrary];
-        originalPlaylistOrder = [...fullLibrary];
+        await browseTo(''); // Carica root all'avvio
 
-        populateFilters();
         await fetchPlaylists();
-        loadTrack(0, false);
 
         const animate = () => {
             if (ctx) vis.renderVisualizer(ctx, document.getElementById('visualizer'), document.getElementById('visualizerSelector').value, isPlaying, 0, audioEngine.analyser, currentCoverUrl);

@@ -1,5 +1,5 @@
 // player.js - Gestione URL e Costanti Audio
-export const DJANGO_BASE_HOST = 'http://127.0.0.1:8000/';
+export const DJANGO_BASE_HOST = '/';
 export const DJANGO_MEDIA_PREFIX = 'media/';
 export const MAX_SAFE_VOLUME = 0.9;
 

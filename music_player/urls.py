@@ -5,12 +5,14 @@ from .views import (
     player_view, 
     MetadataFilterView, 
     MusicStreamView,      
-    PlaylistConfigView    
+    PlaylistConfigView,
+    DirectoryListView
 )
 
 urlpatterns = [
     path('', player_view, name='player-root'), 
     path('api/tracks/', TrackListView.as_view(), name='track-list'),
+    path('api/directories/', DirectoryListView.as_view(), name='directory-list'),
     path('api/filters/', MetadataFilterView.as_view(), name='metadata-filters'), 
     path('api/playlists/', PlaylistConfigView.as_view(), name='playlist-config'),
     path('music_stream/<path:filepath>', MusicStreamView.as_view(), name='music-stream'),
