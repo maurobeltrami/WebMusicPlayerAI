@@ -23,6 +23,12 @@ const safeSetClick = (id, fn) => { const el = document.getElementById(id); if (e
 const safeSetInput = (id, fn) => { const el = document.getElementById(id); if (el) el.oninput = fn; };
 const safeSetChange = (id, fn) => { const el = document.getElementById(id); if (el) el.onchange = fn; };
 
+function getSecureRandomDouble() {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    return array[0] / (0xFFFFFFFF + 1);
+}
+
 function getCookie(name) {
     let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
     return v ? decodeURIComponent(v[2]) : null;
@@ -159,8 +165,9 @@ safeSetClick('playPauseBtn', async () => {
 safeSetClick('shuffleBtn', () => {
     isShuffling = !isShuffling;
     if (isShuffling) {
+        // Fisher-Yates shuffle with Web Crypto API
         for (let i = currentPlaylist.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
+            const j = Math.floor(getSecureRandomDouble() * (i + 1));
             [currentPlaylist[i], currentPlaylist[j]] = [currentPlaylist[j], currentPlaylist[i]];
         }
     } else {

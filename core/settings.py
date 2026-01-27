@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5/ref/settings/#values/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -29,8 +30,19 @@ ALLOWED_HOSTS = []
 
 
 # --- IMPOSTAZIONE CHIAVE PER LA MUSICA LOCALE ---
-# ⚠️ IMPORTANTE: SOSTITUISCI QUESTO CON IL PERCORSO REALE DELLA TUA CARTELLA MUSICALE!
-MUSIC_ROOT = '/Users/mauroi/Documents/music' 
+GAME_MUSIC_PATH = '/Users/mauroi/Documents/music'
+TERMUX_MUSIC_PATH = '/data/data/com.termux/files/home/storage/music'
+
+if os.path.exists(GAME_MUSIC_PATH):
+    MUSIC_ROOT = GAME_MUSIC_PATH
+    print(f"Music Directory Found (PC): {MUSIC_ROOT}")
+elif os.path.exists(TERMUX_MUSIC_PATH):
+    MUSIC_ROOT = TERMUX_MUSIC_PATH
+    print(f"Music Directory Found (Termux): {MUSIC_ROOT}")
+else:
+    # Fallback to Termux path as requested if neither is found, or handle as error
+    MUSIC_ROOT = TERMUX_MUSIC_PATH
+    print(f"WARNING: Music directory not found. Defaulting to: {MUSIC_ROOT}")
 # Assicurati che il server Django abbia i permessi di lettura per questa cartella.
 
 
