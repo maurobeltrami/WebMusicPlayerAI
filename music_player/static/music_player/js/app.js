@@ -176,12 +176,40 @@ safeSetClick('shuffleBtn', () => {
     loadTrack(0, isPlaying);
 });
 
-safeSetClick('progressControl', (e) => {
-    const rect = document.getElementById('progressControl').getBoundingClientRect();
-    const x = e.clientX - rect.left;
+// --- EVENTI UTILI (TOUCH & MOUSE) ---
+function getClientX(e) {
+    return e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+}
+
+const handleSeek = (e) => {
+    // Evita comportamento default (es. scrolling) se necessario, ma attenzione su mobile
+    if (e.cancelable) e.preventDefault();
+
+    const el = document.getElementById('progressControl');
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const clientX = getClientX(e);
+
+    if (isNaN(clientX)) return; // Safety check
+
+    let x = clientX - rect.left;
+    // Clamping
+    if (x < 0) x = 0;
+    if (x > rect.width) x = rect.width;
+
     const percent = x / rect.width;
-    if (audioPlayer.duration) audioPlayer.currentTime = percent * audioPlayer.duration;
-});
+    if (audioPlayer.duration) {
+        audioPlayer.currentTime = percent * audioPlayer.duration;
+    }
+};
+
+const progressEl = document.getElementById('progressControl');
+if (progressEl) {
+    progressEl.addEventListener('click', handleSeek);
+    progressEl.addEventListener('touchstart', handleSeek, { passive: false });
+    progressEl.addEventListener('touchmove', handleSeek, { passive: false });
+}
 
 safeSetClick('nextBtn', () => loadTrack(currentTrackIndex + 1, true));
 safeSetClick('prevBtn', () => loadTrack(currentTrackIndex - 1, true));
@@ -245,9 +273,9 @@ async function fetchDirectories(path) {
         const dirList = document.getElementById('dirList');
         if (dirList) {
             dirList.innerHTML = data.directories.map(d => `
-                <div class="dir-item cursor-pointer hover:bg-blue-50 p-1 rounded flex items-center text-xs text-gray-600" data-path="${d.path}">
-                    <i class="fas fa-folder text-yellow-500 mr-2"></i>
-                    <span class="truncate">${d.name}</span>
+                <div class="dir-item cursor-pointer hover:bg-blue-50 p-3 mb-1 rounded flex items-center text-sm text-gray-800 border-b border-gray-100 touch-manipulation" data-path="${d.path}">
+                    <i class="fas fa-folder text-yellow-500 mr-3 text-lg"></i>
+                    <span class="truncate font-bold">${d.name}</span>
                 </div>
             `).join('');
 
