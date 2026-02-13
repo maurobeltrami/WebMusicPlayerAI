@@ -96,6 +96,10 @@ async function fetchPlaylists() {
                     originalPlaylistOrder = [...currentPlaylist];
                     loadTrack(0, true);
                     document.getElementById('playlistModal').classList.add('hidden');
+
+                    // Aggiorna il selettore nella sidebar
+                    const selector = document.getElementById('savedPlaylistSelector');
+                    if (selector) selector.value = pl.name;
                 };
             });
 
@@ -254,9 +258,92 @@ safeSetChange('savedPlaylistSelector', async (e) => {
 safeSetClick('menuBtn', () => {
     document.getElementById('playlistModal').classList.remove('hidden');
     fetchPlaylists();
+    // Inizializza la lista di selezione vuota o con tutti i brani deselezionati
+    renderTrackSelection('', []);
 });
 
-safeSetClick('closeModal', () => document.getElementById('playlistModal').classList.add('hidden'));
+safeSetClick('closeModal', () => {
+    document.getElementById('playlistModal').classList.add('hidden');
+    // Reset inputs
+    document.getElementById('playlistNameInput').value = '';
+    renderTrackSelection('', []);
+});
+
+// --- LOGICA SALVATAGGIO & SELEZIONE BRANI ---
+function renderTrackSelection(filterText = '', selectedIds = []) {
+    const list = document.getElementById('trackSelectionList');
+    if (!list) return;
+
+    if (fullLibrary.length === 0) {
+        list.innerHTML = '<p class="p-4 text-gray-500 text-center text-sm">Nessun brano trovato nella libreria.</p>';
+        return;
+    }
+
+    // Filtra la libreria completa
+    const tracks = fullLibrary.filter(t =>
+        !filterText ||
+        t.title.toLowerCase().includes(filterText.toLowerCase()) ||
+        t.artist.toLowerCase().includes(filterText.toLowerCase())
+    );
+
+    if (tracks.length === 0) {
+        list.innerHTML = '<p class="p-4 text-gray-500 text-center text-sm">Nessuna corrispondenza.</p>';
+        return;
+    }
+
+    list.innerHTML = tracks.map(t => {
+        const isChecked = selectedIds.includes(String(t.id)) ? 'checked' : '';
+        // Escape quotes for HTML attribute
+        const safeId = String(t.id).replace(/"/g, '&quot;');
+        return `
+            <div class="flex items-center p-2 border-b border-gray-200 hover:bg-gray-100">
+                <input type="checkbox" class="track-checkbox mr-3 h-5 w-5 accent-black"
+                       value="${safeId}" ${isChecked}>
+                <div class="truncate text-sm select-none cursor-pointer" onclick="this.previousElementSibling.click()">
+                    <span class="font-bold">${t.title}</span>
+                    <span class="text-xs text-gray-500">- ${t.artist}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+safeSetInput('modalSearchInput', (e) => {
+    // Recupera gli ID attualmente selezionati per non perderli durante il cambio filtro
+    const currentlySelected = Array.from(document.querySelectorAll('.track-checkbox:checked')).map(cb => cb.value);
+    renderTrackSelection(e.target.value, currentlySelected);
+});
+
+safeSetClick('savePlaylistBtn', async () => {
+    const nameInput = document.getElementById('playlistNameInput');
+    const name = nameInput.value.trim();
+    if (!name) {
+        alert("Inserisci un nome per la playlist!");
+        return;
+    }
+
+    const selectedIds = Array.from(document.querySelectorAll('.track-checkbox:checked')).map(cb => cb.value);
+
+    try {
+        const res = await fetch('/api/playlists/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: name, tracks: selectedIds })
+        });
+
+        if (res.ok) {
+            alert("Playlist salvata!");
+            document.getElementById('playlistModal').classList.add('hidden');
+            fetchPlaylists(); // Aggiorna la lista nella sidebar
+            nameInput.value = '';
+        } else {
+            alert("Errore durante il salvataggio.");
+        }
+    } catch (e) {
+        console.error("Errore salvataggio playlist:", e);
+        alert("Errore di connessione.");
+    }
+});
 
 // --- FOLDER NAVIGATION ---
 let currentFolder = '';
@@ -337,9 +424,65 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (err) { console.error("Errore inizializzazione:", err); }
 });
 
-function openTrackPlaylistModal(trackId) {
+async function openTrackPlaylistModal(trackId) {
     trackTargetId = String(trackId);
     document.getElementById('trackPlaylistModal')?.classList.remove('hidden');
+
+    // Popola lista playlist nel modale "Aggiungi a..."
+    const list = document.getElementById('trackPlaylistList');
+    if (!list) return;
+
+    list.innerHTML = '<p class="text-center text-gray-500">Caricamento...</p>';
+
+    try {
+        const res = await fetch('/api/playlists/');
+        const playlists = await res.json();
+
+        if (playlists.length === 0) {
+            list.innerHTML = '<p class="text-center text-gray-500 p-4">Nessuna playlist creata.</p>';
+            return;
+        }
+
+        list.innerHTML = playlists.map(pl => `
+            <div class="playlist-add-item p-3 border-b hover:bg-gray-100 cursor-pointer flex justify-between items-center" data-name="${pl.name}">
+                <span class="font-bold">${pl.name}</span>
+                <span class="text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded-full">${pl.tracks.length} brani</span>
+            </div>
+        `).join('');
+
+        list.querySelectorAll('.playlist-add-item').forEach(item => {
+            item.onclick = async () => {
+                const playlistName = item.dataset.name;
+                const pl = playlists.find(p => p.name === playlistName);
+
+                // Evita duplicati se lo desideri, o permettili. Qui permettiamo duplicati o controlliamo.
+                if (!pl.tracks.includes(trackTargetId)) {
+                    pl.tracks.push(trackTargetId);
+
+                    // Salva
+                    await fetch('/api/playlists/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(pl)
+                    });
+
+                    alert(`Aggiunto a ${playlistName}!`);
+                } else {
+                    alert("Il brano è già presente nella playlist.");
+                }
+
+                document.getElementById('trackPlaylistModal').classList.add('hidden');
+            };
+        });
+
+    } catch (e) {
+        console.error("Errore loading playlists for modal:", e);
+        list.innerHTML = '<p class="text-red-500 text-center">Errore caricamento.</p>';
+    }
 }
+
+safeSetClick('closeTrackModal', () => {
+    document.getElementById('trackPlaylistModal')?.classList.add('hidden');
+});
 
 safeSetInput('volumeSlider', (e) => { audioPlayer.volume = e.target.value; });

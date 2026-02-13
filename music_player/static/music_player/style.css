@@ -278,14 +278,9 @@
 
 .leopard-bg {
     background-color: #f8c928;
-    background-image:
-        radial-gradient(circle at 10% 20%, #1a1a1a 8%, transparent 9%),
-        radial-gradient(circle at 85% 65%, #1a1a1a 9%, transparent 10%),
-        radial-gradient(circle at 60% 30%, #1a1a1a 6%, transparent 7%),
-        radial-gradient(circle at 30% 80%, #1a1a1a 8%, transparent 9%),
-        radial-gradient(circle at 50% 50%, #1a1a1a 5%, transparent 6%),
-        radial-gradient(circle at 80% 10%, #1a1a1a 7%, transparent 8%);
-    background-size: 80px 80px;
+    background-image: url('img/leopard_bg.png');
+    background-size: 300px;
+    background-repeat: repeat;
     border: 3px solid var(--acid-pink);
     box-shadow: 6px 6px 0px var(--acid-blue);
 }

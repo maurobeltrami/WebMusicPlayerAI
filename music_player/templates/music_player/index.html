@@ -25,15 +25,18 @@
 
             <header
                 class="mb-12 flex flex-col md:flex-row justify-between items-center border-b-[3px] border-black pb-8 gap-4">
-                <h1 class="text-5xl md:text-7xl graffiti-title tracking-tight text-black transform rotate-[-2deg]">
-                    <span class="text-7xl md:text-9xl text-[#D00]">M</span>AURO<span
-                        class="text-7xl md:text-9xl text-[#D00]">M</span>USIC
+                <h1
+                    class="text-4xl md:text-6xl lg:text-7xl graffiti-title tracking-tight text-black transform rotate-[-2deg] text-center md:text-left">
+                    <span class="text-6xl md:text-8xl lg:text-9xl text-[#D00]">M</span>AURO<span
+                        class="text-6xl md:text-8xl lg:text-9xl text-[#D00]">M</span>USIC
                 </h1>
                 <!-- Original Touch: Stylized decorative line or simple spacer instead of album title -->
-                <div class="h-2 w-full max-w-[200px] bg-[#D00] transform skew-x-12 opacity-80 mt-2 md:mt-0"></div>
+                <div
+                    class="h-2 w-full max-w-[200px] bg-[#D00] transform skew-x-12 opacity-80 mt-2 md:mt-0 hidden md:block">
+                </div>
             </header>
 
-            <main class="grid lg:grid-cols-12 gap-12">
+            <main class="grid lg:grid-cols-12 gap-6 lg:gap-12">
                 <aside class="lg:col-span-4 p-4 leopard-bg transform rotate-1 relative z-20">
                     <div
                         class="absolute -top-3 -left-3 bg-acid-pink text-white px-3 py-1 font-bold text-lg rotate-[-5deg] border border-black shadow-[2px_2px_0px_black] font-['Rubik_Wet_Paint']">
@@ -93,11 +96,10 @@
                     </div>
 
                     <div id="displayScreen"
-                        class="w-full p-4 bg-[#eee] border-2 border-black mb-6 flex flex-col items-center justify-center relative shadow-[inset_0_0_40px_rgba(0,0,0,0.2)] bg-[url('https://www.transparenttextures.com/patterns/concrete-wall.png')]"
-                        style="min-height: 480px;">
+                        class="w-full p-4 bg-[#eee] border-2 border-black mb-6 flex flex-col items-center justify-center relative shadow-[inset_0_0_40px_rgba(0,0,0,0.2)] bg-[url('https://www.transparenttextures.com/patterns/concrete-wall.png')] min-h-[300px] md:min-h-[480px]">
                         <div class="w-full px-4 mb-4 overflow-hidden">
                             <p id="currentTrack"
-                                class="text-center graffiti-title text-4xl transform skew-x-[-5deg] drop-shadow-sm">
+                                class="text-center graffiti-title text-2xl md:text-4xl transform skew-x-[-5deg] drop-shadow-sm break-words">
                                 NO MUSIC SELECTED</p>
                         </div>
                         <div class="w-full px-4 mb-2">
@@ -112,7 +114,7 @@
                             0:00</div>
 
                         <div id="visualizerContainer"
-                            class="w-full h-80 bg-black border-4 border-acid-blue outline outline-1 outline-black flex items-center justify-center relative overflow-hidden mt-4">
+                            class="w-full h-48 md:h-80 bg-black border-4 border-acid-blue outline outline-1 outline-black flex items-center justify-center relative overflow-hidden mt-4">
                             <canvas id="visualizer" class="block w-full h-full opacity-80"></canvas>
                         </div>
 
