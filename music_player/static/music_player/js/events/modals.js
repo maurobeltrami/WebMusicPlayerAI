@@ -3,6 +3,7 @@ import * as lib from '../data/library.js';
 import * as pl from '../data/playlist.js';
 import * as selectionUI from '../ui/modalRenderer.js';
 import * as selectionData from '../data/selection.js';
+import { navigateTo } from '../ui/router.js';
 
 // --- MODAL UTILS ---
 export async function uiFetchPlaylists(loadTrackCallback) {
@@ -32,7 +33,7 @@ export async function uiFetchPlaylists(loadTrackCallback) {
                     const tracks = savedPl.tracks.map(id => lib.fullLibrary.find(t => String(t.id) === String(id))).filter(t => t);
                     pl.setPlaylists(tracks);
                     loadTrackCallback(0, true);
-                    document.getElementById('playlistModal').classList.add('hidden');
+                    navigateTo('view-home');
                     if (selector) selector.value = savedPl.name;
                 };
             });
@@ -95,13 +96,13 @@ export async function openTrackPlaylistModal(trackId) {
 // --- SETUP CONFIGURATIONS ---
 export function setupModals(loadTrackCallback) {
     safeSetClick('menuBtn', () => {
-        document.getElementById('playlistModal').classList.remove('hidden');
+        navigateTo('view-playlists');
         uiFetchPlaylists(loadTrackCallback);
         selectionUI.renderTrackSelection(document.getElementById('trackSelectionList'), lib.fullLibrary, '', []);
     });
 
     safeSetClick('closeModal', () => {
-        document.getElementById('playlistModal').classList.add('hidden');
+        navigateTo('view-home');
         document.getElementById('playlistNameInput').value = '';
         selectionUI.renderTrackSelection(document.getElementById('trackSelectionList'), lib.fullLibrary, '', []);
     });
@@ -121,7 +122,6 @@ export function setupModals(loadTrackCallback) {
             const res = await pl.savePlaylistToServer(name, selectedIds);
             if (res.ok) {
                 alert("Playlist salvata!");
-                document.getElementById('playlistModal').classList.add('hidden');
                 uiFetchPlaylists(loadTrackCallback);
                 nameInput.value = '';
             } else alert("Errore durante il salvataggio.");

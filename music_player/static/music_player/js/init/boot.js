@@ -3,6 +3,7 @@ import * as vis from '../ui/visualizer.js';
 import * as pl from '../data/playlist.js';
 import * as mediaLoader from '../core/mediaLoader.js';
 import * as uiRenderer from '../ui/playlistRenderer.js';
+import { setupRouter } from '../ui/router.js';
 
 import { setupAudioEvents } from '../events/audio.js';
 import { setupPlaybackControls } from '../events/playback.js';
@@ -69,6 +70,7 @@ export async function initApp() {
 
         const boundBrowseTo = (path) => browseTo(path, loadTrackCallback, populateFiltersCallback);
         setupNavigation(boundBrowseTo);
+        setupRouter();
 
         // Initial Boot sequence
         await boundBrowseTo('');

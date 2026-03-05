@@ -3,13 +3,18 @@ import { formatTime, getClientX } from '../utils/helpers.js';
 export function setupAudioEvents(audioPlayer, loadNextTrackCallback) {
     audioPlayer.ontimeupdate = () => {
         const progressBar = document.getElementById('progressBar');
+        const progressBarBottom = document.getElementById('progressBarBottom');
         const timeDisplay = document.getElementById('time-display');
+        const timeDisplayBottom = document.getElementById('time-display-bottom');
+        
         if (audioPlayer.duration) {
             const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
             if (progressBar) progressBar.style.width = `${percent}%`;
-            if (timeDisplay) {
-                timeDisplay.textContent = `${formatTime(audioPlayer.currentTime)} / ${formatTime(audioPlayer.duration)}`;
-            }
+            if (progressBarBottom) progressBarBottom.style.width = `${percent}%`;
+            
+            const timeStr = `${formatTime(audioPlayer.currentTime)} / ${formatTime(audioPlayer.duration)}`;
+            if (timeDisplay) timeDisplay.textContent = timeStr;
+            if (timeDisplayBottom) timeDisplayBottom.textContent = timeStr;
         }
     };
 
@@ -33,9 +38,13 @@ export function setupAudioEvents(audioPlayer, loadNextTrackCallback) {
     };
 
     const progressEl = document.getElementById('progressControl');
-    if (progressEl) {
-        progressEl.addEventListener('click', handleSeek);
-        progressEl.addEventListener('touchstart', handleSeek, { passive: false });
-        progressEl.addEventListener('touchmove', handleSeek, { passive: false });
-    }
+    const progressElBottom = document.getElementById('progressControlBottom');
+    
+    [progressEl, progressElBottom].forEach(el => {
+        if (el) {
+            el.addEventListener('click', handleSeek);
+            el.addEventListener('touchstart', handleSeek, { passive: false });
+            el.addEventListener('touchmove', handleSeek, { passive: false });
+        }
+    });
 }

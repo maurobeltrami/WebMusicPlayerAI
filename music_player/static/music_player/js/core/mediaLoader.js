@@ -11,9 +11,9 @@ export function loadTrack(audioPlayer, index, autoPlay, renderUICallback) {
     audioPlayer.load();
 
     const trackDisplay = document.getElementById('currentTrack');
-    if (trackDisplay) {
-        trackDisplay.textContent = `${track.title} - ${track.artist}`;
-    }
+    const trackDisplayBottom = document.getElementById('currentTrackBottom');
+    if (trackDisplay) trackDisplay.textContent = `${track.title} - ${track.artist}`;
+    if (trackDisplayBottom) trackDisplayBottom.textContent = `${track.title} - ${track.artist}`;
 
     let cover = track.cover_url 
         ? paths.getFinalAudioSrc(track.cover_url) 
@@ -21,15 +21,18 @@ export function loadTrack(audioPlayer, index, autoPlay, renderUICallback) {
     pl.setCoverUrl(cover);
 
     const playIcon = document.getElementById('playPauseIcon');
+    const playIconBottom = document.getElementById('playPauseIconBottom');
 
     if (autoPlay) {
         audioPlayer.play().then(() => {
             pl.setPlaying(true);
             if (playIcon) playIcon.classList.replace('fa-play', 'fa-pause');
+            if (playIconBottom) playIconBottom.classList.replace('fa-play', 'fa-pause');
         }).catch(() => { });
     } else {
         pl.setPlaying(false);
         if (playIcon) playIcon.classList.replace('fa-pause', 'fa-play');
+        if (playIconBottom) playIconBottom.classList.replace('fa-pause', 'fa-play');
     }
     
     if (renderUICallback) renderUICallback();

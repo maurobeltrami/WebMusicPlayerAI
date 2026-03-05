@@ -29,3 +29,13 @@ Rendere la repository GitHub più professionale per attrarre contributori:
 * **Visuals nel README:** Aggiungere screenshot e GIF animate che mostrino il player in azione (soprattutto i visualizzatori a tempo di musica e lo stile punk).
 * **Gestione Dipendenze:** Generare un file `requirements.txt` aggiornato o passare a sistemi come `poetry` per bloccare le versioni.
 * **CONTRIBUTING.md:** Aggiungere un file che spieghi ad altri programmatori come configurare l'ambiente di sviluppo e come aiutarti a migliorare il codice.
+
+## 6. 🎛️ Pagina di Equalizzazione Professionale
+Aggiungere una sezione o una pagina dedicata esclusivamente all'audio processing:
+* **Equalizzatore Parametrico:** Implementare un EQ grafico o parametrico utilizzando la Web Audio API, permettendo agli utenti di calibrare il suono con precisione.
+* **Effetti e Preset:** Possibilità di applicare effetti sonori o salvare i propri preset di equalizzazione preferiti.
+
+## 7. 🎨 Selettore di Stili (Temi)
+Permettere un'alta personalizzazione estetica del player:
+* **Cambio Tema Rapido:** Introdurre un semplice bottone o menu a tendina per passare tra diversi temi (es. "Punk", "Dark Mode", "Retro", "Minimal") con un solo clic.
+* **Variabili CSS:** Assicurarsi che tutto lo styling si basi su variabili CSS dinamiche per supportare un cambio istantaneo senza ricaricare la pagina.

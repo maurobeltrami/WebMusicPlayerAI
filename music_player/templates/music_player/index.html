@@ -17,11 +17,17 @@
     class="bg-[#1a1a1a] min-h-screen p-2 md:p-4 flex items-start justify-center font-['Special_Elite'] text-black overflow-x-hidden selection:bg-[#D00] selection:text-white bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')]">
 
 
-    <div class="max-w-6xl w-full relative z-10">
+    <div class="w-full relative z-10 px-2 md:px-8">
 
-        <!-- Safety pins or tape can go here -->
+        <!-- Navigazione SPA -->
+        <nav class="w-full bg-black text-white p-4 mb-4 flex justify-center gap-6 border-b-4 border-[#D00] sticky top-0 z-50 shadow-lg font-['Rubik_Wet_Paint'] text-xl">
+            <button class="nav-btn text-[#D00] hover:scale-110 transition-transform" data-target="view-home">HOME</button>
+            <button class="nav-btn hover:text-[#D00] hover:scale-110 transition-transform" data-target="view-playlists">PLAYLIST</button>
+            <button class="nav-btn hover:text-[#D00] hover:scale-110 transition-transform" data-target="view-equalizer">EQUALIZER</button>
+        </nav>
 
-        <div class="stencil-box p-4 md:p-8">
+        <!-- VIEW: HOME (Libreria + Player Centrale) -->
+        <div id="view-home" class="page-view block stencil-box p-4 md:p-8 mb-24">
 
             <header
                 class="mb-12 flex flex-col md:flex-row justify-between items-center border-b-[3px] border-black pb-8 gap-4">
@@ -182,33 +188,32 @@
                 <ul id="playlist" class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar font-['Special_Elite']">
                 </ul>
             </section>
-        </div>
+            </section>
+        </div> <!-- End VIEW: HOME -->
 
-        <div id="playlistModal" class="fixed inset-0 bg-black/90 hidden z-50 flex items-center justify-center p-2">
-            <div class="stencil-box rounded-none w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
-                <div class="p-4 border-b-4 border-black flex justify-between items-center bg-[#D00]">
+        <!-- VIEW: PLAYLISTS -->
+        <div id="view-playlists" class="page-view hidden stencil-box p-4 md:p-8 mb-32 bg-white">
+            <div class="flex flex-col h-full">
+                <div class="p-4 border-b-4 border-black flex justify-between items-center bg-[#D00] mb-4">
                     <h2 class="text-3xl graffiti-title text-white">MANAGE PLAYLIST</h2>
-                    <button id="closeModal" class="text-white hover:text-black text-4xl font-bold">&times;</button>
                 </div>
-                <div class="flex-1 overflow-y-auto p-4 bg-white">
+                <div class="flex-1 overflow-y-auto p-4 bg-white border-2 border-black">
                     <div class="grid md:grid-cols-2 gap-8">
-                        <div class="flex flex-col h-[400px]">
-                            <h3 class="mb-2 text-black font-black uppercase text-lg border-b-2 border-black">Libreria
-                                Brani</h3>
+                        <div class="flex flex-col h-[500px]">
+                            <h3 class="mb-2 text-black font-black uppercase text-lg border-b-2 border-black">Libreria Brani</h3>
                             <input type="text" id="modalSearchInput" placeholder="Cerca brano..."
                                 class="w-full p-2 border-2 border-black rounded-none mb-2 font-['Special_Elite']">
                             <div id="trackSelectionList"
                                 class="flex-1 overflow-y-auto border-2 border-black rounded-none bg-gray-50 p-2">
                             </div>
                         </div>
-                        <div class="flex flex-col h-[300px]">
-                            <h3 class="mb-2 text-black font-black uppercase text-lg border-b-2 border-black">Le tue
-                                Playlist</h3>
+                        <div class="flex flex-col h-[500px]">
+                            <h3 class="mb-2 text-black font-black uppercase text-lg border-b-2 border-black">Le tue Playlist</h3>
                             <ul id="savedPlaylistsList" class="flex-1 overflow-y-auto space-y-2"></ul>
                         </div>
                     </div>
                 </div>
-                <div class="p-4 border-t-4 border-black bg-[#eee] flex flex-col gap-3">
+                <div class="mt-4 p-4 border-4 border-black bg-[#eee] flex flex-col gap-3">
                     <input type="text" id="playlistNameInput" placeholder="Nome nuova playlist..."
                         class="w-full p-3 border-2 border-black rounded-none font-['Special_Elite']">
                     <button id="savePlaylistBtn"
@@ -217,10 +222,22 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </div> <!-- End VIEW: PLAYLISTS -->
 
-        <div id="trackPlaylistModal"
-            class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center p-4">
+        <!-- VIEW: EQUALIZER -->
+        <div id="view-equalizer" class="page-view hidden stencil-box p-4 md:p-8 mb-32 bg-[#222]">
+            <div class="p-4 border-b-4 border-acid-green flex justify-between items-center mb-4">
+                <h2 class="text-3xl graffiti-title text-acid-green">EQUALIZER STUDIO</h2>
+            </div>
+            <div class="h-[600px] flex items-center justify-center border-4 border-dashed border-gray-600">
+                <p class="text-gray-400 font-bold text-2xl font-['Special_Elite']">WORK IN PROGRESS...</p>
+            </div>
+        </div> <!-- End VIEW: EQUALIZER -->
+
+    </div> <!-- End Main Container -->
+
+    <!-- Modal per aggiungere traccia singola (Remains a popup) -->
+        <div id="trackPlaylistModal" class="fixed inset-0 bg-black/60 hidden z-[60] flex items-center justify-center p-4">
             <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
                 <div class="p-4 border-b flex justify-between items-center bg-gray-50">
                     <h3 class="font-bold text-gray-800">Aggiungi a playlist</h3>
@@ -230,6 +247,37 @@
                 </div>
             </div>
         </div>
+
+        <!-- THE CONDITIONAL BOTTOM PLAYER (Visible only on Playlists & Eq views) -->
+        <footer id="bottom-player" class="fixed bottom-0 left-0 w-full h-24 bg-black border-t-4 border-[#D00] z-[100] hidden flex-col justify-center px-4 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+            <!-- Progress Bar -->
+            <div id="progressControlBottom" class="absolute top-[-4px] left-0 w-full h-2 bg-gray-800 cursor-pointer">
+                <div id="progressBarBottom" class="h-full bg-acid-pink pointer-events-none" style="width: 0%;"></div>
+            </div>
+            
+            <div class="flex justify-between items-center h-full w-full px-4 md:px-8 gap-4">
+                <!-- Track Info -->
+                <div class="flex-1 truncate">
+                    <p id="currentTrackBottom" class="text-white font-['Special_Elite'] font-bold text-sm md:text-xl truncate">NO MUSIC SELECTED</p>
+                    <p id="time-display-bottom" class="text-acid-green text-xs font-bold">0:00</p>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex items-center gap-4 md:gap-8">
+                    <button id="prevBtnBottom" class="text-white hover:text-acid-pink text-2xl"><i class="fas fa-backward"></i></button>
+                    <button id="playPauseBtnBottom" class="text-black bg-acid-green hover:bg-white w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-xl transition-colors">
+                        <i id="playPauseIconBottom" class="fas fa-play"></i>
+                    </button>
+                    <button id="nextBtnBottom" class="text-white hover:text-acid-pink text-2xl"><i class="fas fa-forward"></i></button>
+                </div>
+
+                <!-- Volume -->
+                <div class="hidden md:flex items-center gap-2 w-32">
+                    <i class="fas fa-volume-up text-white text-sm"></i>
+                    <input type="range" id="volumeSliderBottom" min="0" max="1" step="0.01" value="0.75" class="w-full accent-acid-pink h-1 bg-gray-600 appearance-none">
+                </div>
+            </div>
+        </footer>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
         <script type="module" src="{% static 'music_player/js/app.js' %}"></script>
