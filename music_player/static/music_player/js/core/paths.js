@@ -1,6 +1,6 @@
 // player.js - Gestione URL e Costanti Audio
 export const DJANGO_BASE_HOST = '/';
-export const DJANGO_MEDIA_PREFIX = 'media/';
+export const DJANGO_MEDIA_PREFIX = 'music_stream/';
 export const MAX_SAFE_VOLUME = 0.9;
 
 /**
@@ -15,6 +15,6 @@ export function getFinalAudioSrc(rawUrl) {
         .replace(/^music_stream\//, '')
         .replace(/^\//, '');
 
-    const encodedFilepath = encodeURIComponent(relativeUrl);
+    const encodedFilepath = relativeUrl.split('/').map(encodeURIComponent).join('/');
     return DJANGO_BASE_HOST + DJANGO_MEDIA_PREFIX + encodedFilepath;
 }

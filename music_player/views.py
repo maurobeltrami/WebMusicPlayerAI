@@ -132,7 +132,10 @@ class DirectoryListView(APIView):
             'directories': directories
         })
 
-class MusicStreamView(APIView):
+from django.views import View
+from django.http import JsonResponse
+
+class MusicStreamView(View):
     """Gestisce lo streaming dei file audio permettendo l'accesso alle sottocartelle."""
     def get(self, request, filepath):
         file_path = Path(settings.MUSIC_ROOT) / filepath 
@@ -145,13 +148,12 @@ class MusicStreamView(APIView):
             # Increase block size to 64KB for better streaming performance
             response = FileResponse(f, content_type=mime_type or 'audio/mpeg')
             response.block_size = 65536  # 64KB chunk size
-            response['Content-Length'] = os.path.getsize(file_path)
             response['Accept-Ranges'] = 'bytes'
             # Force inline disposition to ensure browser treats it as a stream/displayable media
             response['Content-Disposition'] = 'inline'
             return response
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            return JsonResponse({"error": str(e)}, status=500)
 
 class MetadataFilterView(APIView):
     """Restituisce liste uniche di artisti e album per i filtri del frontend."""

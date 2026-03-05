@@ -1,9 +1,4 @@
-export const formatTime = (seconds) => {
-    if (isNaN(seconds) || seconds < 0) return '0:00';
-    const minutes = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
-};
+import { formatTime } from '../utils/helpers.js';
 
 export function updatePlaylistView(playlist, currentIndex, isPlaying, elements, actions) {
     const { playlistEl, nextBtn, prevBtn, shuffleBtn } = elements;
@@ -65,7 +60,6 @@ export function updatePlaylistView(playlist, currentIndex, isPlaying, elements, 
 
     if (shuffleBtn) {
         if (actions.isShuffling) {
-            // Effetto attivo: Blu con ombra interna e rotazione
             shuffleBtn.classList.add('text-blue-600', 'bg-blue-100', 'rounded-full', 'scale-110', 'shadow-inner');
             shuffleBtn.classList.remove('text-gray-600');
         } else {
