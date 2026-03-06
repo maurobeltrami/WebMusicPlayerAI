@@ -47,9 +47,10 @@ export function updatePlaylistView(playlist, currentIndex, isPlaying, elements, 
         li.appendChild(btnGroup);
         playlistEl.appendChild(li);
 
-        if (isCurrent && isPlaying) {
-            li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+        // COMMENTATO: Preveniamo che lo scorrimento automatico della traccia a inizio playback forzi il salto dello schermo.
+        // if (isCurrent && isPlaying) {
+        //     li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // }
     });
 
     if (nextBtn) nextBtn.disabled = playlist.length === 0;

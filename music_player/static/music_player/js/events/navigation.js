@@ -22,7 +22,7 @@ export async function browseTo(path, loadTrackCallback, populateFiltersCallback)
         const dirList = document.getElementById('dirList');
         if (dirList) {
             dirList.innerHTML = data.directories.map(d => `
-                <div class="dir-item cursor-pointer hover:bg-blue-50 p-3 mb-1 rounded flex items-center text-sm text-gray-800 border-b border-gray-100 touch-manipulation" data-path="${d.path}">
+                <div class="dir-item cursor-pointer bg-box-bg hover:bg-theme-accent hover:text-white p-3 mb-1 flex items-center text-sm font-primary text-theme-text border-b border-box-border-color touch-manipulation" data-path="${d.path}">
                     <i class="fas fa-folder text-yellow-500 mr-3 text-lg"></i>
                     <span class="truncate font-bold">${d.name}</span>
                 </div>

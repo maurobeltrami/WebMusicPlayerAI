@@ -20,8 +20,8 @@
 
 /* Override per Punk Mode */
 [data-theme="punk"] #playlist .playlist-item.active {
-    background-color: var(--acid-blue);
-    color: white;
+    background-color: var(--acid-green);
+    color: black; /* Better contrast on acid green */
     border-left-color: var(--acid-pink);
-    box-shadow: 0 4px 6px -1px var(--acid-blue), 0 2px 4px -2px var(--acid-blue);
+    box-shadow: 0 4px 6px -1px var(--acid-green), 0 2px 4px -2px var(--acid-green);
 }

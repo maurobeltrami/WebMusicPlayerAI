@@ -134,12 +134,26 @@
 /* --- ACID & LEOPARD ADDITIONS --- */
 
 .leopard-bg {
-    background-color: #f8c928;
+    background-color: #FFFF00; /* Yellow punk estremo accessissimo */
     background-image: var(--leopard-pattern);
     background-size: 300px;
     background-repeat: repeat;
     border: var(--box-border-width) solid var(--acid-pink);
     box-shadow: 6px 6px 0px var(--leopard-shadow);
+}
+
+[data-theme="punk"] .leopard-text {
+    background-color: black;
+    color: white;
+    padding: 2px 8px;
+    border: 2px solid white; /* Optional higher contrast edge */
+}
+
+/* Fix per select e input nel riquadro scuro del tema punk */
+[data-theme="punk"] aside input,
+[data-theme="punk"] aside select {
+    background-color: var(--bg-main) !important;
+    color: white !important;
 }
 
 /* Acid Utility Classes */

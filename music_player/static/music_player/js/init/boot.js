@@ -2,14 +2,14 @@ import * as audioEngine from '../core/audioEngine.js';
 import * as vis from '../ui/visualizer.js';
 import * as pl from '../data/playlist.js';
 import * as mediaLoader from '../core/mediaLoader.js';
-import * as uiRenderer from '../ui/playlistRenderer.js?v=7';
+import * as uiRenderer from '../ui/playlistRenderer.js?v=8';
 import { setupRouter } from '../ui/router.js';
 import { initTheme } from '../ui/themeManager.js';
 
 import { setupAudioEvents } from '../events/audio.js';
 import { setupPlaybackControls } from '../events/playback.js';
 import { setupFilters } from '../events/filters.js';
-import { setupNavigation, browseTo } from '../events/navigation.js';
+import { setupNavigation, browseTo } from '../events/navigation.js?v=2';
 import { setupModals, uiFetchPlaylists, openTrackPlaylistModal } from '../events/modals.js';
 
 export async function initApp() {

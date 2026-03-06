@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Special+Elite&family=Inter:wght@400;600;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'music_player/style.css' %}?version=4">
+    <link rel="stylesheet" href="{% static 'music_player/style.css' %}?version=11">
     <script>
         tailwind.config = {
             theme: {
@@ -20,6 +20,10 @@
                             bg: 'var(--bg-main)',
                             text: 'var(--text-main)',
                             accent: 'var(--accent-red)',
+                        },
+                        box: {
+                            bg: 'var(--box-bg)',
+                            border: 'var(--box-border-color)',
                         }
                     },
                     fontFamily: {
@@ -51,9 +55,9 @@
             <div class="md:absolute md:right-4 flex items-center gap-2 font-primary text-sm bg-theme-bg p-1 border-2 border-theme-accent rotate-scuff-2 z-50">
                 <label for="themeSelector" class="font-bold text-theme-text px-1 uppercase hidden md:block">Tema:</label>
                 <select id="themeSelector" class="bg-theme-bg text-theme-text border-none font-bold outline-none cursor-pointer uppercase p-1">
-                    <option value="dark">Scuro (Default)</option>
-                    <option value="light">Chiaro (Elegante)</option>
-                    <option value="punk">PUNK (Original)</option>
+                    <option value="dark">Scuro</option>
+                    <option value="light">Chiaro</option>
+                    <option value="punk">PUNK</option>
                 </select>
             </div>
         </nav>
@@ -80,7 +84,7 @@
                         class="absolute -top-3 -left-3 bg-acid-pink text-white px-3 py-1 font-bold text-lg rotate-[-5deg] border border-black shadow-[2px_2px_0px_black] font-title">
                         TRAX</div>
 
-                    <h2 class="text-2xl font-black mb-4 uppercase border-b-2 border-black inline-block px-1">Libreria
+                    <h2 class="leopard-text text-2xl font-black mb-4 uppercase border-b-2 border-theme-text md:border-black inline-block px-1">Libreria
                     </h2>
 
                     <!-- Folder Navigation -->
@@ -89,7 +93,7 @@
                             class="block text-sm font-bold uppercase mb-1 bg-acid-blue text-theme-text inline-block px-1 transform -rotate-1 border border-black">Cartelle</label>
                         <div class="flex items-center gap-2 mb-2 p-1 border-b-2 border-black">
                             <button id="dirUpBtn"
-                                class="bg-black text-white hover:bg-theme-accent hover:text-white px-2 font-bold text-xl transition-colors"><i
+                                class="bg-theme-text text-theme-bg hover:bg-theme-accent hover:text-white px-2 font-bold text-xl transition-colors"><i
                                     class="fas fa-arrow-up"></i></button>
                             <span id="currentDirDisplay"
                                 class="truncate font-primary text-theme-text text-xs flex-1">/</span>
@@ -147,7 +151,7 @@
                             </div>
                         </div>
                         <div id="time-display"
-                            class="font-primary font-bold bg-white border border-black px-2 mt-2 inline-block shadow-[2px_2px_0px_black] text-black">
+                            class="font-primary font-bold bg-theme-bg border border-theme-text px-2 mt-2 inline-block shadow-[2px_2px_0px_var(--text-main)] text-theme-text">
                             0:00</div>
 
                         <div id="visualizerContainer"
@@ -220,7 +224,7 @@
             </main>
 
             <section class="mt-8 border-t-4 border-black pt-6 bg-box-bg p-4 relative torn-paper">
-                <h2 class="text-3xl graffiti-title text-black mb-4 inline-block relative z-10">PLAYLIST QUEUE (<span id="playlistCount">0</span>)</h2>
+                <h2 class="text-3xl graffiti-title text-theme-text mb-4 inline-block relative z-10">PLAYLIST QUEUE (<span id="playlistCount">0</span>)</h2>
                 <ul id="playlist" class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar font-primary relative z-10">
                 </ul>
             </section>
@@ -244,16 +248,16 @@
                             </div>
                         </div>
                         <div class="flex flex-col h-[500px]">
-                            <h3 class="mb-2 text-black font-black uppercase text-lg border-b-2 border-black">Le tue Playlist</h3>
+                            <h3 class="mb-2 text-theme-text font-black uppercase text-lg border-b-2 border-theme-text">Le tue Playlist</h3>
                             <ul id="savedPlaylistsList" class="flex-1 overflow-y-auto space-y-2"></ul>
                         </div>
                     </div>
                 </div>
                 <div class="mt-4 p-4 border-4 border-black bg-theme-bg flex flex-col gap-3">
                     <input type="text" id="playlistNameInput" placeholder="Nome nuova playlist..."
-                        class="w-full p-3 border-2 border-black rounded-none font-primary bg-white focus:outline-none focus:border-theme-accent text-black">
+                        class="w-full p-3 border-2 border-theme-text rounded-none font-primary bg-theme-bg focus:outline-none focus:border-theme-accent text-theme-text">
                     <button id="savePlaylistBtn"
-                        class="w-full bg-black text-white border-2 border-white py-4 font-black text-2xl uppercase tracking-widest hover:bg-theme-accent transition-colors font-title">
+                        class="w-full bg-theme-text text-theme-bg border-2 border-theme-text py-4 font-black text-2xl uppercase tracking-widest hover:bg-theme-accent hover:text-white transition-colors font-title">
                         SALVA TUTTO
                     </button>
                 </div>
@@ -301,23 +305,23 @@
 
                 <!-- Controls -->
                 <div class="flex items-center gap-4 md:gap-8">
-                    <button id="prevBtnBottom" class="text-white hover:text-acid-pink text-2xl"><i class="fas fa-backward"></i></button>
+                    <button id="prevBtnBottom" class="text-theme-text hover:text-acid-pink text-2xl"><i class="fas fa-backward"></i></button>
                     <button id="playPauseBtnBottom" style="border-radius: 50% !important;" class="text-black bg-acid-green hover:bg-theme-accent hover:text-white w-12 h-12 md:w-14 md:h-14 aspect-square rounded-full flex items-center justify-center text-xl transition-colors">
                         <i id="playPauseIconBottom" class="fas fa-play"></i>
                     </button>
-                    <button id="nextBtnBottom" class="text-white hover:text-acid-pink text-2xl"><i class="fas fa-forward"></i></button>
+                    <button id="nextBtnBottom" class="text-theme-text hover:text-acid-pink text-2xl"><i class="fas fa-forward"></i></button>
                 </div>
 
                 <!-- Volume -->
                 <div class="hidden md:flex items-center gap-2 w-32">
-                    <i class="fas fa-volume-up text-white text-sm"></i>
+                    <i class="fas fa-volume-up text-theme-text text-sm"></i>
                     <input type="range" id="volumeSliderBottom" min="0" max="1" step="0.01" value="0.75" class="w-full accent-theme-accent h-1 bg-gray-600 appearance-none">
                 </div>
             </div>
         </footer>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
-        <script type="module" src="{% static 'music_player/js/app.js' %}?version=8"></script>
+        <script type="module" src="{% static 'music_player/js/app.js' %}?version=11"></script>
 </body>
 
 </html>
