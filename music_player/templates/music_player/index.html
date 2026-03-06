@@ -8,22 +8,54 @@
     <title>Mauro Music Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Special+Elite&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Special+Elite&family=Inter:wght@400;600;700;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'music_player/style.css' %}">
+    <link rel="stylesheet" href="{% static 'music_player/style.css' %}?version=4">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        theme: {
+                            bg: 'var(--bg-main)',
+                            text: 'var(--text-main)',
+                            accent: 'var(--accent-red)',
+                        }
+                    },
+                    fontFamily: {
+                        primary: ['var(--font-primary)'],
+                        title: ['var(--font-title)']
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 
 <body
-    class="bg-[#1a1a1a] min-h-screen p-2 md:p-4 flex items-start justify-center font-['Special_Elite'] text-black overflow-x-hidden selection:bg-[#D00] selection:text-white bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')]">
+    class="bg-theme-bg text-theme-text min-h-screen font-primary custom-scrollbar transition-colors duration-300">
 
 
     <div class="w-full relative z-10 px-2 md:px-8">
 
         <!-- Navigazione SPA -->
-        <nav class="w-full bg-black text-white p-4 mb-4 flex justify-center gap-6 border-b-4 border-[#D00] sticky top-0 z-50 shadow-lg font-['Rubik_Wet_Paint'] text-xl">
-            <button class="nav-btn text-[#D00] hover:scale-110 transition-transform" data-target="view-home">HOME</button>
-            <button class="nav-btn hover:text-[#D00] hover:scale-110 transition-transform" data-target="view-playlists">PLAYLIST</button>
-            <button class="nav-btn hover:text-[#D00] hover:scale-110 transition-transform" data-target="view-equalizer">EQUALIZER</button>
+        <nav
+            class="w-full bg-theme-bg text-theme-text p-4 mb-4 flex flex-col md:flex-row items-center justify-center gap-4 border-b-4 border-theme-accent sticky top-0 z-50 shadow-lg font-title text-xl transition-colors duration-300">
+            <div class="flex gap-6 justify-center flex-wrap w-full md:w-auto">
+                <button class="nav-btn text-theme-accent hover:scale-110 transition-transform" data-target="view-home">HOME</button>
+                <button class="nav-btn hover:text-theme-accent hover:scale-110 transition-transform" data-target="view-playlists">PLAYLIST</button>
+                <button class="nav-btn hover:text-theme-accent hover:scale-110 transition-transform" data-target="view-equalizer">EQUALIZER</button>
+            </div>
+            
+            <!-- Selettore di Stile -->
+            <div class="md:absolute md:right-4 flex items-center gap-2 font-primary text-sm bg-theme-bg p-1 border-2 border-theme-accent rotate-scuff-2 z-50">
+                <label for="themeSelector" class="font-bold text-theme-text px-1 uppercase hidden md:block">Tema:</label>
+                <select id="themeSelector" class="bg-theme-bg text-theme-text border-none font-bold outline-none cursor-pointer uppercase p-1">
+                    <option value="dark">Scuro (Default)</option>
+                    <option value="light">Chiaro (Elegante)</option>
+                    <option value="punk">PUNK (Original)</option>
+                </select>
+            </div>
         </nav>
 
         <!-- VIEW: HOME (Libreria + Player Centrale) -->
@@ -32,77 +64,76 @@
             <header
                 class="mb-12 flex flex-col md:flex-row justify-between items-center border-b-[3px] border-black pb-8 gap-4">
                 <h1
-                    class="text-4xl md:text-6xl lg:text-7xl graffiti-title tracking-tight text-black transform rotate-[-2deg] text-center md:text-left">
-                    <span class="text-6xl md:text-8xl lg:text-9xl text-[#D00]">M</span>AURO<span
-                        class="text-6xl md:text-8xl lg:text-9xl text-[#D00]">M</span>USIC
+                    class="text-4xl md:text-6xl lg:text-7xl graffiti-title tracking-tight text-theme-text transform rotate-[-2deg] text-center md:text-left">
+                    <span class="text-6xl md:text-8xl lg:text-9xl text-theme-accent">M</span>AURO<span
+                        class="text-6xl md:text-8xl lg:text-9xl text-theme-accent">M</span>USIC
                 </h1>
-                <!-- Original Touch: Stylized decorative line or simple spacer instead of album title -->
+                <!-- Spacer -->
                 <div
-                    class="h-2 w-full max-w-[200px] bg-[#D00] transform skew-x-12 opacity-80 mt-2 md:mt-0 hidden md:block">
+                    class="h-2 w-full max-w-[200px] bg-theme-accent transform skew-x-12 opacity-80 mt-2 md:mt-0 hidden md:block">
                 </div>
             </header>
 
             <main class="grid lg:grid-cols-12 gap-6 lg:gap-12">
                 <aside class="lg:col-span-4 p-4 leopard-bg transform rotate-1 relative z-20">
                     <div
-                        class="absolute -top-3 -left-3 bg-acid-pink text-white px-3 py-1 font-bold text-lg rotate-[-5deg] border border-black shadow-[2px_2px_0px_black] font-['Rubik_Wet_Paint']">
+                        class="absolute -top-3 -left-3 bg-acid-pink text-white px-3 py-1 font-bold text-lg rotate-[-5deg] border border-black shadow-[2px_2px_0px_black] font-title">
                         TRAX</div>
 
                     <h2 class="text-2xl font-black mb-4 uppercase border-b-2 border-black inline-block px-1">Libreria
                     </h2>
 
                     <!-- Folder Navigation -->
-                    <div class="mb-6 p-2 bg-white border border-black">
+                    <div class="mb-6 p-2 bg-box-bg border border-black">
                         <label
-                            class="block text-sm font-bold uppercase mb-1 bg-acid-blue text-black inline-block px-1 transform -rotate-1 border border-black">Cartelle</label>
+                            class="block text-sm font-bold uppercase mb-1 bg-acid-blue text-theme-text inline-block px-1 transform -rotate-1 border border-black">Cartelle</label>
                         <div class="flex items-center gap-2 mb-2 p-1 border-b-2 border-black">
                             <button id="dirUpBtn"
-                                class="bg-black text-white hover:bg-acid-green hover:text-black px-2 font-bold text-xl transition-colors"><i
+                                class="bg-black text-white hover:bg-theme-accent hover:text-white px-2 font-bold text-xl transition-colors"><i
                                     class="fas fa-arrow-up"></i></button>
                             <span id="currentDirDisplay"
-                                class="truncate font-['Special_Elite'] text-gray-900 text-xs flex-1">/</span>
+                                class="truncate font-primary text-theme-text text-xs flex-1">/</span>
                         </div>
                         <div id="dirList"
-                            class="max-h-32 overflow-y-auto space-y-1 custom-scrollbar font-['Special_Elite']">
+                            class="max-h-32 overflow-y-auto space-y-1 custom-scrollbar font-primary">
                             <!-- JS populated -->
                         </div>
                     </div>
 
-                    <div class="mb-6 border-4 border-black p-2 bg-white">
+                    <div class="mb-6 border-4 border-black p-2 bg-box-bg">
                         <label
-                            class="block text-sm font-bold uppercase mb-1 bg-acid-green text-black inline-block px-1 transform rotate-1 border border-black">Playlist</label>
+                            class="block text-sm font-bold uppercase mb-1 bg-acid-green text-theme-text inline-block px-1 transform rotate-1 border border-black">Playlist</label>
                         <select id="savedPlaylistSelector"
-                            class="w-full p-2 border-2 border-black bg-white font-bold text-sm outline-none focus:bg-acid-pink focus:text-white focus:ring-0 font-['Special_Elite']">
+                            class="w-full p-2 border-2 border-black bg-theme-bg font-bold text-sm outline-none focus:bg-theme-accent focus:text-white focus:ring-0 font-primary">
                             <option value="all">Tutta la Libreria</option>
                         </select>
                     </div>
-                    <div class="mb-6 p-2 bg-white border-2 border-dashed border-black">
+                    <div class="mb-6 p-2 bg-box-bg border-2 border-dashed border-black rounded-sm">
                         <input type="text" id="searchTrackInput" placeholder="CERCA BRANO..."
-                            class="w-full p-2 border-b-2 border-black bg-transparent uppercase font-bold placeholder-gray-500 focus:outline-none font-['Special_Elite'] focus:bg-acid-blue">
+                            class="w-full p-2 border-b-2 border-theme-accent bg-transparent uppercase font-bold placeholder-gray-500 text-theme-text focus:outline-none font-primary focus:bg-acid-blue">
                     </div>
                     <div class="mb-4">
                         <label
-                            class="block text-sm font-bold uppercase mb-1 text-black bg-acid-green inline-block px-1 border border-black transform -rotate-1">Artista</label>
+                            class="block text-sm font-bold uppercase mb-1 text-theme-text bg-acid-green inline-block px-1 border border-black transform -rotate-1 relative z-20">Artista</label>
                         <select id="artistFilter"
-                            class="w-full p-2 border-2 border-black rounded-none bg-gray-100 font-['Special_Elite']"></select>
+                            class="w-full p-2 border-2 border-black rounded-none bg-theme-bg font-primary mt-[-2px] relative z-10"></select>
                     </div>
                     <div class="mb-4">
                         <label
-                            class="block text-sm font-bold uppercase mb-1 text-white bg-acid-pink inline-block px-1 border border-black transform rotate-1">Album</label>
+                            class="block text-sm font-bold uppercase mb-1 text-white bg-acid-pink inline-block px-1 border border-black transform rotate-1 relative z-20">Album</label>
                         <select id="albumFilter"
-                            class="w-full p-2 border-2 border-black rounded-none bg-gray-100 font-['Special_Elite']"></select>
+                            class="w-full p-2 border-2 border-black rounded-none bg-theme-bg font-primary mt-[-2px] relative z-10"></select>
                     </div>
                 </aside>
 
                 <section class="lg:col-span-8 p-4 stencil-box relative border-acid-green">
-                    <!-- Decorative Sticker -->
-                    <div class="absolute -top-5 -right-5 transform rotate-12 z-20">
-                        <img src="https://img.icons8.com/stencil/96/FA5252/punk.png" alt="Punk"
-                            class="w-24 opacity-90 drop-shadow-md">
+                    <!-- Decorative Sticker (Nasconde nel modern dal CSS se si vuole) -->
+                    <div class="tape absolute -top-5 -right-5 transform rotate-12 z-20">
+                        <!-- Tape Div -->
                     </div>
 
                     <div id="displayScreen"
-                        class="w-full p-4 bg-[#eee] border-2 border-black mb-6 flex flex-col items-center justify-center relative shadow-[inset_0_0_40px_rgba(0,0,0,0.2)] bg-[url('https://www.transparenttextures.com/patterns/concrete-wall.png')] min-h-[300px] md:min-h-[480px]">
+                        class="w-full p-4 border-2 border-black mb-6 flex flex-col items-center justify-center relative shadow-[inset_0_0_40px_rgba(0,0,0,0.2)] bg-box-bg bg-[image:var(--concrete-pattern)] min-h-[300px] md:min-h-[480px]">
                         <div class="w-full px-4 mb-4 overflow-hidden">
                             <p id="currentTrack"
                                 class="text-center graffiti-title text-2xl md:text-4xl transform skew-x-[-5deg] drop-shadow-sm break-words">
@@ -111,22 +142,27 @@
                         <div class="w-full px-4 mb-2">
                             <div id="progressControl"
                                 class="w-full h-8 bg-black border-2 border-black cursor-pointer relative group">
-                                <div id="progressBar" class="h-full bg-acid-pink pointer-events-none opacity-100"
+                                <div id="progressBar" class="h-full bg-theme-accent pointer-events-none opacity-100"
                                     style="width: 0%;"></div>
                             </div>
                         </div>
                         <div id="time-display"
-                            class="font-['Special_Elite'] font-bold bg-white border border-black px-2 mt-2 inline-block shadow-[2px_2px_0px_black]">
+                            class="font-primary font-bold bg-white border border-black px-2 mt-2 inline-block shadow-[2px_2px_0px_black] text-black">
                             0:00</div>
 
                         <div id="visualizerContainer"
-                            class="w-full h-48 md:h-80 bg-black border-4 border-acid-blue outline outline-1 outline-black flex items-center justify-center relative overflow-hidden mt-4">
+                            class="w-full h-48 md:h-80 bg-black border-4 border-acid-blue flex items-center justify-center relative overflow-hidden mt-4">
                             <canvas id="visualizer" class="block w-full h-full opacity-80"></canvas>
                         </div>
 
-                        <div class="mt-3">
+                        <!-- Controlli Visualizer (sovrapposti) -->
+                        <div
+                            class="absolute top-2 right-2 flex flex-col items-end opacity-60 hover:opacity-100 transition-opacity duration-300 z-10 bg-black/50 p-2 rounded">
+                            <label for="visualizerSelector"
+                                class="text-[10px] text-white font-bold tracking-widest uppercase mb-1 drop-shadow-md">TIPO
+                                VISUALIZER</label>
                             <select id="visualizerSelector"
-                                class="p-1 text-sm font-bold bg-white text-black border-2 border-black rounded-none uppercase hover:bg-[#D00] hover:text-white focus:outline-none mt-2 font-['Special_Elite']">
+                                class="mb-2 bg-transparent text-white font-primary font-bold uppercase text-xl p-1 outline-none text-center cursor-pointer hover:scale-105 transition-transform">
                                 <option value="cover">Copertina</option>
                                 <option value="waveform">Waveform</option>
                                 <option value="bars">Bars</option>
@@ -151,58 +187,58 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-center w-full mt-4">
-                        <div
-                            class="flex flex-col items-center justify-center mr-4 md:mr-8 relative w-8 h-32 bg-transparent">
-                            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.75"
-                                class="accent-acid-green cursor-pointer h-6 w-32 appearance-none bg-transparent rotate-[-90deg]">
-                        </div>
-                        <div
-                            class="relative w-40 h-40 md:w-48 md:h-48 bg-white border-4 border-black rounded-full flex items-center justify-center shadow-[0px_0px_0px_4px_black] overflow-hidden">
-                            <!-- Spiral/Hypnotic Center for Ska feel -->
-                            <div
-                                class="absolute inset-0 bg-[repeating-conic-gradient(black_0deg_10deg,white_10deg_20deg)] opacity-10 pointer-events-none">
-                            </div>
-                            <button id="shuffleBtn" class="absolute top-4 text-black hover:text-[#D00]"><i
-                                    class="fas fa-random fa-lg"></i></button>
-                            <button id="prevBtn" class="absolute left-4 text-black hover:text-[#D00]"><i
-                                    class="fas fa-backward fa-lg"></i></button>
-                            <button id="nextBtn" class="absolute right-4 text-black hover:text-[#D00]"><i
-                                    class="fas fa-forward fa-lg"></i></button>
-                            <button id="menuBtn" class="absolute bottom-4 text-black hover:text-[#D00]"><i
-                                    class="fas fa-bars fa-lg"></i></button>
+                    <!-- PLAYER CONTROLS (HORIZONTAL SPOTIFY STYLE) -->
+                    <div class="flex flex-col md:flex-row items-center justify-between w-full mt-6 gap-6 px-4">
+                        
+                        <!-- Colonna Sinistra: Vuota o extra info se necessario -->
+                        <div class="hidden md:flex flex-1"></div>
 
-                            <button id="playPauseBtn"
-                                class="w-16 h-16 md:w-20 md:h-20 bg-[#D00] border-4 border-white rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform z-10">
+                        <!-- Centro: Controlli Riproduzione -->
+                        <div class="flex items-center justify-center gap-6">
+                            <button id="shuffleBtn" class="text-theme-text hover:text-theme-accent transition-colors"><i class="fas fa-random fa-lg"></i></button>
+                            <button id="prevBtn" class="text-theme-text hover:text-theme-accent transition-colors"><i class="fas fa-step-backward fa-lg"></i></button>
+                            
+                            <button id="playPauseBtn" style="border-radius: 50% !important;"
+                                class="w-14 h-14 md:w-16 md:h-16 aspect-square bg-theme-accent border-2 border-box-bg rounded-full flex items-center justify-center text-theme-bg shadow-lg hover:scale-105 transition-transform z-10 text-white">
                                 <i id="playPauseIcon" class="fas fa-play fa-xl"></i>
                             </button>
+                            
+                            <button id="nextBtn" class="text-theme-text hover:text-theme-accent transition-colors"><i class="fas fa-step-forward fa-lg"></i></button>
+                            <button id="menuBtn" class="text-theme-text hover:text-theme-accent transition-colors"><i class="fas fa-list fa-lg"></i></button>
+                        </div>
+
+                        <!-- Destra: Volume -->
+                        <div class="flex items-center justify-center md:justify-end flex-1 gap-3">
+                            <button id="muteToggleBtn" class="text-theme-text hover:text-theme-accent transition-colors">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.75" class="w-24 md:w-32">
                         </div>
                     </div>
                     <audio id="audioPlayer" crossorigin="anonymous"></audio>
                 </section>
             </main>
 
-            <section class="mt-8 border-t-4 border-black pt-6 bg-white p-4">
-                <h2 class="text-3xl graffiti-title text-black mb-4">PLAYLIST QUEUE (<span id="playlistCount">0</span>)
-                </h2>
-                <ul id="playlist" class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar font-['Special_Elite']">
+            <section class="mt-8 border-t-4 border-black pt-6 bg-box-bg p-4 relative torn-paper">
+                <h2 class="text-3xl graffiti-title text-black mb-4 inline-block relative z-10">PLAYLIST QUEUE (<span id="playlistCount">0</span>)</h2>
+                <ul id="playlist" class="space-y-2 max-h-80 overflow-y-auto custom-scrollbar font-primary relative z-10">
                 </ul>
             </section>
             </section>
         </div> <!-- End VIEW: HOME -->
 
         <!-- VIEW: PLAYLISTS -->
-        <div id="view-playlists" class="page-view hidden stencil-box p-4 md:p-8 mb-32 bg-white">
+        <div id="view-playlists" class="page-view hidden stencil-box p-4 md:p-8 mb-32 bg-box-bg">
             <div class="flex flex-col h-full">
-                <div class="p-4 border-b-4 border-black flex justify-between items-center bg-[#D00] mb-4">
+                <div class="p-4 border-b-4 border-black flex justify-between items-center bg-theme-accent mb-4">
                     <h2 class="text-3xl graffiti-title text-white">MANAGE PLAYLIST</h2>
                 </div>
-                <div class="flex-1 overflow-y-auto p-4 bg-white border-2 border-black">
+                <div class="flex-1 overflow-y-auto p-4 bg-box-bg border-2 border-black">
                     <div class="grid md:grid-cols-2 gap-8">
                         <div class="flex flex-col h-[500px]">
-                            <h3 class="mb-2 text-black font-black uppercase text-lg border-b-2 border-black">Libreria Brani</h3>
+                            <h3 class="mb-2 text-theme-text font-black uppercase text-lg border-b-2 border-black">Libreria Brani</h3>
                             <input type="text" id="modalSearchInput" placeholder="Cerca brano..."
-                                class="w-full p-2 border-2 border-black rounded-none mb-2 font-['Special_Elite']">
+                                class="w-full p-2 border-2 border-black rounded-none mb-2 font-primary bg-theme-bg">
                             <div id="trackSelectionList"
                                 class="flex-1 overflow-y-auto border-2 border-black rounded-none bg-gray-50 p-2">
                             </div>
@@ -213,11 +249,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-4 p-4 border-4 border-black bg-[#eee] flex flex-col gap-3">
+                <div class="mt-4 p-4 border-4 border-black bg-theme-bg flex flex-col gap-3">
                     <input type="text" id="playlistNameInput" placeholder="Nome nuova playlist..."
-                        class="w-full p-3 border-2 border-black rounded-none font-['Special_Elite']">
+                        class="w-full p-3 border-2 border-black rounded-none font-primary bg-white focus:outline-none focus:border-theme-accent text-black">
                     <button id="savePlaylistBtn"
-                        class="w-full bg-black text-white border-2 border-white py-4 font-black text-2xl uppercase tracking-widest hover:bg-[#D00] transition-colors font-['Rubik_Wet_Paint']">
+                        class="w-full bg-black text-white border-2 border-white py-4 font-black text-2xl uppercase tracking-widest hover:bg-theme-accent transition-colors font-title">
                         SALVA TUTTO
                     </button>
                 </div>
@@ -230,7 +266,7 @@
                 <h2 class="text-3xl graffiti-title text-acid-green">EQUALIZER STUDIO</h2>
             </div>
             <div class="h-[600px] flex items-center justify-center border-4 border-dashed border-gray-600">
-                <p class="text-gray-400 font-bold text-2xl font-['Special_Elite']">WORK IN PROGRESS...</p>
+                <p class="text-gray-400 font-bold text-2xl font-primary">WORK IN PROGRESS...</p>
             </div>
         </div> <!-- End VIEW: EQUALIZER -->
 
@@ -248,24 +284,25 @@
             </div>
         </div>
 
-        <!-- THE CONDITIONAL BOTTOM PLAYER (Visible only on Playlists & Eq views) -->
-        <footer id="bottom-player" class="fixed bottom-0 left-0 w-full h-24 bg-black border-t-4 border-[#D00] z-[100] hidden flex-col justify-center px-4 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+        <!-- BOTTOM STICKY PLAYER -->
+        <footer id="bottom-player"
+            class="fixed bottom-0 left-0 w-full h-24 bg-theme-bg border-t-4 border-theme-accent z-[100] hidden flex-col justify-center px-4 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] transition-colors duration-300">
             <!-- Progress Bar -->
             <div id="progressControlBottom" class="absolute top-[-4px] left-0 w-full h-2 bg-gray-800 cursor-pointer">
-                <div id="progressBarBottom" class="h-full bg-acid-pink pointer-events-none" style="width: 0%;"></div>
+                <div id="progressBarBottom" class="h-full bg-theme-accent pointer-events-none" style="width: 0%;"></div>
             </div>
             
             <div class="flex justify-between items-center h-full w-full px-4 md:px-8 gap-4">
                 <!-- Track Info -->
                 <div class="flex-1 truncate">
-                    <p id="currentTrackBottom" class="text-white font-['Special_Elite'] font-bold text-sm md:text-xl truncate">NO MUSIC SELECTED</p>
+                    <p id="currentTrackBottom" class="text-theme-text font-primary font-bold text-sm md:text-xl truncate">NO MUSIC SELECTED</p>
                     <p id="time-display-bottom" class="text-acid-green text-xs font-bold">0:00</p>
                 </div>
 
                 <!-- Controls -->
                 <div class="flex items-center gap-4 md:gap-8">
                     <button id="prevBtnBottom" class="text-white hover:text-acid-pink text-2xl"><i class="fas fa-backward"></i></button>
-                    <button id="playPauseBtnBottom" class="text-black bg-acid-green hover:bg-white w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-xl transition-colors">
+                    <button id="playPauseBtnBottom" style="border-radius: 50% !important;" class="text-black bg-acid-green hover:bg-theme-accent hover:text-white w-12 h-12 md:w-14 md:h-14 aspect-square rounded-full flex items-center justify-center text-xl transition-colors">
                         <i id="playPauseIconBottom" class="fas fa-play"></i>
                     </button>
                     <button id="nextBtnBottom" class="text-white hover:text-acid-pink text-2xl"><i class="fas fa-forward"></i></button>
@@ -274,13 +311,13 @@
                 <!-- Volume -->
                 <div class="hidden md:flex items-center gap-2 w-32">
                     <i class="fas fa-volume-up text-white text-sm"></i>
-                    <input type="range" id="volumeSliderBottom" min="0" max="1" step="0.01" value="0.75" class="w-full accent-acid-pink h-1 bg-gray-600 appearance-none">
+                    <input type="range" id="volumeSliderBottom" min="0" max="1" step="0.01" value="0.75" class="w-full accent-theme-accent h-1 bg-gray-600 appearance-none">
                 </div>
             </div>
         </footer>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
-        <script type="module" src="{% static 'music_player/js/app.js' %}"></script>
+        <script type="module" src="{% static 'music_player/js/app.js' %}?version=8"></script>
 </body>
 
 </html>

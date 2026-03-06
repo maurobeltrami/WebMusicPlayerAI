@@ -2,8 +2,9 @@ import * as audioEngine from '../core/audioEngine.js';
 import * as vis from '../ui/visualizer.js';
 import * as pl from '../data/playlist.js';
 import * as mediaLoader from '../core/mediaLoader.js';
-import * as uiRenderer from '../ui/playlistRenderer.js';
+import * as uiRenderer from '../ui/playlistRenderer.js?v=7';
 import { setupRouter } from '../ui/router.js';
+import { initTheme } from '../ui/themeManager.js';
 
 import { setupAudioEvents } from '../events/audio.js';
 import { setupPlaybackControls } from '../events/playback.js';
@@ -13,6 +14,9 @@ import { setupModals, uiFetchPlaylists, openTrackPlaylistModal } from '../events
 
 export async function initApp() {
     try {
+        // Inizializza il tema come primissima cosa per evitare flash
+        initTheme();
+
         const audioPlayer = document.getElementById('audioPlayer');
         const ctx = document.getElementById('visualizer')?.getContext('2d');
 

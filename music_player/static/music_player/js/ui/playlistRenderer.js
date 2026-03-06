@@ -9,10 +9,7 @@ export function updatePlaylistView(playlist, currentIndex, isPlaying, elements, 
         const isCurrent = index === currentIndex;
         const li = document.createElement('li');
 
-        li.className = `flex justify-between items-center p-3 rounded-lg shadow-sm mb-2 transition-all duration-200 ${isCurrent
-            ? 'bg-blue-600 text-white scale-[1.02] border-l-4 border-blue-300'
-            : 'bg-white hover:bg-gray-100 text-gray-800 border-l-4 border-transparent'
-            }`;
+        li.className = `playlist-item flex justify-between items-center p-3 rounded-lg shadow-sm mb-2 transition-all duration-200 cursor-pointer ${isCurrent ? 'active scale-[1.02]' : ''}`;
 
         const infoDiv = document.createElement('div');
         infoDiv.className = 'flex-1 truncate mr-2 cursor-pointer';
@@ -28,7 +25,7 @@ export function updatePlaylistView(playlist, currentIndex, isPlaying, elements, 
 
         const addBtn = document.createElement('button');
         addBtn.innerHTML = '<i class="fas fa-plus-circle fa-lg pointer-events-none"></i>';
-        addBtn.className = `transition-transform hover:scale-125 p-1 ${isCurrent ? 'text-blue-200 hover:text-white' : 'text-blue-500 hover:text-blue-700'}`;
+        addBtn.className = `transition-transform hover:scale-125 p-1 ${isCurrent ? 'opacity-80 hover:opacity-100' : 'opacity-50 hover:opacity-100 text-theme-accent'}`;
         addBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -37,7 +34,7 @@ export function updatePlaylistView(playlist, currentIndex, isPlaying, elements, 
 
         const removeBtn = document.createElement('button');
         removeBtn.innerHTML = '<i class="fas fa-times pointer-events-none"></i>';
-        removeBtn.className = `transition-colors p-1 ${isCurrent ? 'text-white/70 hover:text-red-300' : 'text-gray-300 hover:text-red-500'}`;
+        removeBtn.className = `transition-colors p-1 opacity-50 hover:opacity-100 hover:text-red-500`;
         removeBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -60,11 +57,11 @@ export function updatePlaylistView(playlist, currentIndex, isPlaying, elements, 
 
     if (shuffleBtn) {
         if (actions.isShuffling) {
-            shuffleBtn.classList.add('text-blue-600', 'bg-blue-100', 'rounded-full', 'scale-110', 'shadow-inner');
-            shuffleBtn.classList.remove('text-gray-600');
+            shuffleBtn.classList.add('text-theme-accent', 'scale-110');
+            shuffleBtn.classList.remove('opacity-70');
         } else {
-            shuffleBtn.classList.remove('text-blue-600', 'bg-blue-100', 'rounded-full', 'scale-110', 'shadow-inner');
-            shuffleBtn.classList.add('text-gray-600');
+            shuffleBtn.classList.remove('text-theme-accent', 'scale-110');
+            shuffleBtn.classList.add('opacity-70');
         }
     }
 }
