@@ -175,20 +175,7 @@
                             </select>
                         </div>
 
-                        <div
-                            class="w-full mt-4 px-4 py-2 bg-black/30 rounded-lg border border-white/10 grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-[8px] text-gray-400 block uppercase">Threshold: <span
-                                        id="thresholdVal">-24</span>dB</label>
-                                <input type="range" id="thresholdSlider" min="-60" max="0" value="-24"
-                                    class="w-full h-1">
-                            </div>
-                            <div>
-                                <label class="text-[8px] text-gray-400 block uppercase">Ratio: <span
-                                        id="ratioVal">12</span>:1</label>
-                                <input type="range" id="ratioSlider" min="1" max="20" value="12" class="w-full h-1">
-                            </div>
-                        </div>
+
                     </div>
 
                     <!-- PLAYER CONTROLS (HORIZONTAL SPOTIFY STYLE) -->
@@ -264,13 +251,102 @@
             </div>
         </div> <!-- End VIEW: PLAYLISTS -->
 
-        <!-- VIEW: EQUALIZER -->
         <div id="view-equalizer" class="page-view hidden stencil-box p-4 md:p-8 mb-32 bg-[#222]">
-            <div class="p-4 border-b-4 border-acid-green flex justify-between items-center mb-4">
+            <div class="p-4 border-b-4 border-acid-green flex justify-between items-center mb-8">
                 <h2 class="text-3xl graffiti-title text-acid-green">EQUALIZER STUDIO</h2>
             </div>
-            <div class="h-[600px] flex items-center justify-center border-4 border-dashed border-gray-600">
-                <p class="text-gray-400 font-bold text-2xl font-primary">WORK IN PROGRESS...</p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 w-full max-w-6xl mx-auto p-4 md:p-8 bg-box-bg border-4 border-black box-shadow-br">
+                
+                <!-- VOLUME SECTION -->
+                <div class="lg:col-span-3 flex flex-col items-center p-6 border-4 border-black bg-acid-blue relative torn-paper">
+                    <h3 class="font-black text-2xl uppercase tracking-widest text-black mb-8 border-b-4 border-black pb-2 w-full text-center">VOLUME</h3>
+                    <div class="relative h-64 w-12 flex justify-center bg-black/20 rounded-full border-2 border-black p-1">
+                        <input type="range" id="eqVolumeSlider" min="0" max="1" step="0.01" value="0.75" orient="vertical"
+                            class="w-full h-full accent-theme-accent outline-none cursor-pointer"
+                            style="writing-mode: vertical-lr; direction: rtl;">
+                    </div>
+                </div>
+
+                <!-- EQUALIZER SECTION -->
+                <div class="lg:col-span-5 flex flex-col items-center p-6 border-4 border-black bg-theme-bg relative tape-corner">
+                    <h3 class="font-black text-2xl uppercase tracking-widest text-theme-text mb-8 border-b-4 border-theme-text pb-2 w-full text-center">EQUALIZER</h3>
+                    <div class="flex justify-around w-full gap-4">
+                        <!-- LOW -->
+                        <div class="flex flex-col items-center gap-4">
+                            <span class="font-bold text-sm text-theme-text bg-black text-white px-2 py-1 transform -rotate-2">LOW</span>
+                            <div class="relative h-48 w-8 flex justify-center bg-black/10 rounded-full border-2 border-black p-1">
+                                <input type="range" id="eqLowSlider" min="-12" max="12" step="0.1" value="0" orient="vertical"
+                                    class="w-full h-full accent-theme-accent outline-none cursor-pointer"
+                                    style="writing-mode: vertical-lr; direction: rtl;">
+                            </div>
+                            <span class="font-bold text-xs text-theme-text" id="eqLowVal">0 dB</span>
+                        </div>
+                        <!-- MID -->
+                        <div class="flex flex-col items-center gap-4">
+                            <span class="font-bold text-sm text-theme-text bg-black text-white px-2 py-1 transform rotate-1">MID</span>
+                            <div class="relative h-48 w-8 flex justify-center bg-black/10 rounded-full border-2 border-black p-1">
+                                <input type="range" id="eqMidSlider" min="-12" max="12" step="0.1" value="0" orient="vertical"
+                                    class="w-full h-full accent-theme-accent outline-none cursor-pointer"
+                                    style="writing-mode: vertical-lr; direction: rtl;">
+                            </div>
+                            <span class="font-bold text-xs text-theme-text" id="eqMidVal">0 dB</span>
+                        </div>
+                        <!-- HIGH -->
+                        <div class="flex flex-col items-center gap-4">
+                            <span class="font-bold text-sm text-theme-text bg-black text-white px-2 py-1 transform -rotate-1">HIGH</span>
+                            <div class="relative h-48 w-8 flex justify-center bg-black/10 rounded-full border-2 border-black p-1">
+                                <input type="range" id="eqHighSlider" min="-12" max="12" step="0.1" value="0" orient="vertical"
+                                    class="w-full h-full accent-theme-accent outline-none cursor-pointer"
+                                    style="writing-mode: vertical-lr; direction: rtl;">
+                            </div>
+                            <span class="font-bold text-xs text-theme-text" id="eqHighVal">0 dB</span>
+                        </div>
+                    </div>
+                    
+                    <!-- BASS BOOST BUTTON -->
+                    <div class="mt-6 w-full flex justify-center">
+                        <button id="bassBoostBtn" class="bg-black text-theme-text border-2 border-theme-text px-4 py-2 font-black tracking-widest uppercase hover:bg-theme-accent hover:text-white transition-colors transform rotate-1 shadow-[2px_2px_0px_var(--text-main)] w-full max-w-[200px]">
+                            BASS BOOST: OFF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- COMPRESSOR SECTION -->
+                <div class="lg:col-span-4 flex flex-col items-center p-6 border-4 border-black bg-acid-pink relative">
+                    <h3 class="font-black text-2xl uppercase tracking-widest text-white mb-8 border-b-4 border-white pb-2 w-full text-center">COMPRESSOR</h3>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                        <!-- THRESHOLD -->
+                        <div class="flex flex-col items-center gap-3">
+                            <label class="font-bold text-[10px] text-white bg-black px-1 py-0.5">THRESH</label>
+                            <div class="relative h-32 w-6 flex justify-center bg-black/20 rounded-full border-2 border-black p-[2px]">
+                                <input type="range" id="thresholdSlider" min="-60" max="0" value="-24" orient="vertical"
+                                    class="w-full h-full accent-theme-accent outline-none cursor-pointer"
+                                    style="writing-mode: vertical-lr; direction: rtl;">
+                            </div>
+                            <span class="font-bold text-[10px] text-white"><span id="thresholdVal">-24</span> dB</span>
+                        </div>
+                        <!-- RATIO -->
+                        <div class="flex flex-col items-center gap-3">
+                            <label class="font-bold text-[10px] text-white bg-black px-1 py-0.5">RATIO</label>
+                            <div class="relative h-32 w-6 flex justify-center bg-black/20 rounded-full border-2 border-black p-[2px]">
+                                <input type="range" id="ratioSlider" min="1" max="20" value="12" orient="vertical"
+                                    class="w-full h-full accent-theme-accent outline-none cursor-pointer"
+                                    style="writing-mode: vertical-lr; direction: rtl;">
+                            </div>
+                            <span class="font-bold text-[10px] text-white"><span id="ratioVal">12</span>:1</span>
+                        </div>
+                        <!-- ATTACK -->
+                        <div class="flex flex-col items-center gap-3">
+                            <label class="font-bold text-[10px] text-white bg-black px-1 py-0.5 transform -rotate-90 origin-bottom translate-y-[-10px] whitespace-nowrap">ATTACK 3ms</label>
+                        </div>
+                        <!-- RELEASE -->
+                        <div class="flex flex-col items-center gap-3">
+                            <label class="font-bold text-[10px] text-white bg-black px-1 py-0.5 transform -rotate-90 origin-bottom translate-y-[-10px] whitespace-nowrap">RELEASE 250ms</label>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div> <!-- End VIEW: EQUALIZER -->
 

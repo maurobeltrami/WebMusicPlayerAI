@@ -11,6 +11,7 @@ import { setupPlaybackControls } from '../events/playback.js';
 import { setupFilters } from '../events/filters.js';
 import { setupNavigation, browseTo } from '../events/navigation.js?v=2';
 import { setupModals, uiFetchPlaylists, openTrackPlaylistModal } from '../events/modals.js';
+import { setupEqualizer } from '../events/equalizer.js';
 
 export async function initApp() {
     try {
@@ -71,6 +72,7 @@ export async function initApp() {
         setupPlaybackControls(audioPlayer, loadTrackCallback, renderUICallback);
         setupFilters(loadTrackCallback, renderUICallback);
         setupModals(loadTrackCallback);
+        setupEqualizer();
 
         const boundBrowseTo = (path) => browseTo(path, loadTrackCallback, populateFiltersCallback);
         setupNavigation(boundBrowseTo);
