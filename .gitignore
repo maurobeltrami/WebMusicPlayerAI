@@ -32,5 +32,7 @@ db.sqlite3
 .DS_Store
 
 # File di log
-*.logclient_secret.json
+*.log
+
+client_secret.json
 token.json
