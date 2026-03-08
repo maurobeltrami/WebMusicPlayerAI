@@ -16,4 +16,5 @@ urlpatterns = [
     path('api/filters/', MetadataFilterView.as_view(), name='metadata-filters'), 
     path('api/playlists/', PlaylistConfigView.as_view(), name='playlist-config'),
     path('music_stream/<path:filepath>', MusicStreamView.as_view(), name='music-stream'),
+    path('gdrive_stream/<path:filepath>', MusicStreamView.as_view(), name='gdrive-stream'),
 ]

@@ -13,6 +13,14 @@ export function setupFilters(loadTrackCallback, renderUICallback) {
         if (renderUICallback) renderUICallback();
     });
 
+    safeSetChange('sourceFilter', (e) => {
+        const filtered = e.target.value 
+            ? lib.fullLibrary.filter(t => t.source === e.target.value) 
+            : [...lib.fullLibrary];
+        pl.setPlaylists(filtered);
+        loadTrackCallback(0, pl.isPlaying);
+    });
+
     safeSetChange('artistFilter', (e) => {
         const filtered = e.target.value 
             ? lib.fullLibrary.filter(t => t.artist === e.target.value) 
