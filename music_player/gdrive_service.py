@@ -22,7 +22,12 @@ def get_drive_service(user_id=None):
 
     # The file token.json stores the user's access and refresh tokens
     if token_path.exists():
-        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+        try:
+            creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+        except ValueError:
+            print(f"File {token_path} non valido o senza refresh_token. Lo elimino per forzare una nuova autenticazione.")
+            token_path.unlink()
+            creds = None
         
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
@@ -39,7 +44,7 @@ def get_drive_service(user_id=None):
             
             # Use run_local_server for local development with fixed port
             # to avoid redirect_uri_mismatch
-            creds = flow.run_local_server(port=8080, open_browser=False)
+            creds = flow.run_local_server(port=8080, open_browser=False, prompt='consent', access_type='offline')
             
         # Save the credentials for the next run
         with open(token_path, 'w') as token:
