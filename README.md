@@ -68,7 +68,7 @@ Se preferisci controllare ogni passaggio per evitare compilatori pesanti su cell
 3. **Installazione requisiti applicativi in Python:**
    ```bash
    pip install --upgrade pip
-   pip install django djangorestframework google-api-python-client google-auth-oauthlib mutagen
+   pip install django djangorestframework django-cors-headers mutagen requests google-api-python-client google-auth-httplib2 google-auth-oauthlib
    ```
 
 4. **Preparazione cartelle e Database:**

@@ -9,7 +9,7 @@ source venv/bin/activate
 
 # Installazione requisiti Python
 pip install --upgrade pip
-pip install django djangorestframework google-api-python-client google-auth-oauthlib mutagen
+pip install django djangorestframework django-cors-headers mutagen requests google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
 # Preparazione cartella musica e database
 mkdir -p media_music
