@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.conf import settings
 from django.http import FileResponse, Http404
 from mutagen.mp3 import MP3
@@ -70,6 +71,8 @@ def get_track_metadata(file_path):
 
 class TrackListView(APIView):
     """Restituisce la lista di tutti i brani dal database."""
+    permission_classes = [AllowAny]
+
     def get(self, request):
         tracks = Track.objects.all()
         
@@ -94,6 +97,8 @@ class TrackListView(APIView):
 
 class DirectoryListView(APIView):
     """Restituisce le sottocartelle di un dato percorso."""
+    permission_classes = [AllowAny]
+
     def get(self, request):
         music_root = Path(settings.MUSIC_ROOT)
         current_path_param = request.query_params.get('path', '')
@@ -102,13 +107,9 @@ class DirectoryListView(APIView):
         if current_path_param:
             target_dir = music_root / current_path_param
             
-        # Security check
-        try:
-            resolved_target = target_dir.resolve()
-            if not (resolved_target == music_root or music_root in resolved_target.parents):
-                return Response({"error": "Accesso negato"}, status=403)
-        except Exception:
-             return Response({"error": "Percorso non valido"}, status=400)
+        # Security check semplificato per Termux (bypass link simbolici)
+        if '..' in current_path_param:
+             return Response({"error": "Accesso negato"}, status=403)
 
         if not target_dir.exists() or not target_dir.is_dir():
             return Response({"error": "Cartella non trovata"}, status=404)

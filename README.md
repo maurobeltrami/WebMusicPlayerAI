@@ -16,66 +16,69 @@ Un lettore musicale web moderno, scalabile e completamente Responsive costruito 
 
 ## 📱 Guida all'Installazione su Android tramite Termux
 
-Questa applicazione è stata testata ed è perfettamente compatibile con **Termux** su Android, poiché utilizza dipendenze pure in Python (senza estensioni C complesse che richiedono compilatori).
+Questa applicazione è stata ottimizzata per girare perfettamente su **Termux** per Android. Puoi utilizzare lo script automatico fornito oppure eseguire l'installazione manuale per bypassare i tipici errori di compilazione e autorizzazione file.
 
-### Fase 1: Setup di Base su Termux
+### 🚀 Installazione Rapida (Consigliata)
 
-1.  Apri Termux e aggiorna i pacchetti base:
-    ```bash
-    pkg update && pkg upgrade
-    ```
-2.  Installa Python, Git e sqlite (fondimentale per il database di Django):
-    ```bash
-    pkg install python git sqlite
-    ```
-3.  Dai a Termux il permesso di accedere alla memoria del telefono (per leggere la tua musica locale):
-    ```bash
-    termux-setup-storage
-    ```
+Apri Termux e utilizza gli script automatizzati per configurare e avviare l'app in pochi minuti:
 
-### Fase 2: Clonazione e Installazione
+1. **Clona il repository:**
+   ```bash
+   pkg install git
+   git clone https://github.com/maurobeltrami/WebMusicPlayerAI
+   cd WebMusicPlayerAI
+   ```
 
-1.  Clona il repository nella memoria interna:
-    ```bash
-    cd ~/storage/shared/
-    git clone https://github.com/maurobeltrami/WebMusicPlayerAI
-    cd WebMusicPlayerAI
-    ```
-2.  (Opzionale ma consigliato) Crea l'Ambiente Virtuale:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate
-    ```
-3.  Installa i requisiti indispensabili:
-    ```bash
-    pip install django djangorestframework django-cors-headers mutagen requests
-    ```
-4.  Installa i pacchetti opzionali per l'accesso a Google Drive (se intendi streammare dal cloud):
-    ```bash
-    pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
-    ```
+2. **Esegui lo script di setup automatico:**
+   Questo script installerà le dipendenze di sistema corrette (incluso python-cryptography pre-compilato), creerà l'ambiente Python e configurerà le cartelle necessarie.
+   ```bash
+   chmod +x setup_termux.sh
+   ./setup_termux.sh
+   ```
 
-### Fase 3: Avvio e Scansione
+3. **Avvia il server:**
+   Usa lo script di avvio che impedisce ad Android di sospendere la CPU e lancia il server sulla porta 8250.
+   ```bash
+   chmod +x start.sh
+   ./start.sh
+   ```
 
-1.  Avvia le migrazioni del database:
-    ```bash
-    python manage.py migrate
-    ```
-2.  Avvia la scansione della tua memoria per cercare la musica.
-    *Assicurati che la variabile `MUSIC_ROOT` nel file `core/settings.py` punti a una cartella valida del tuo telefono (es. `/storage/emulated/0/Music`).*
-    ```bash
-    python manage.py scan_music
-    ```
-3.  Se vuoi aggiungere anche Google Drive, esegui:
-    ```bash
-    python manage.py scan_music --gdrive
-    ```
-    *(Nota: richiede il caricamento preventivo del tuo file `client_secret.json` scaricato dalla Google Cloud Console nella root del progetto).*
-4.  Avvia il server per accedere all'app dal browser del telefono:
-    ```bash
-    python manage.py runserver 0.0.0.0:8000
-    ```
-5.  Apri Chrome o il tuo browser preferito su Android e digita: `http://localhost:8000`
+4. **Ascolta la tua libreria:**
+   Metti la tua musica nella cartella `media_music/` all'interno del progetto, oppure abilita lo streaming proxy configurando l'API di Google Drive (vedi sotto).
+   Apri il browser del telefono: `http://localhost:8250`
+
+### 🛠️ Installazione Manuale
+
+Se preferisci controllare ogni passaggio per evitare compilatori pesanti su cellulare:
+
+1. **Installazione dipendenze di sistema:**
+   Evitiamo la compilazione pesante di `cryptography` installando il pacchetto pre-compilato di Termux:
+   ```bash
+   pkg update && pkg upgrade -y
+   pkg install python python-cryptography binutils rust termux-api -y
+   ```
+
+2. **Creazione Ambiente Virtuale VENV:**
+   Usiamo `--system-site-packages` per agganciare i pacchetti pre-compilati.
+   ```bash
+   python -m venv --system-site-packages venv
+   source venv/bin/activate
+   ```
+
+3. **Installazione requisiti applicativi in Python:**
+   ```bash
+   pip install --upgrade pip
+   pip install django djangorestframework google-api-python-client google-auth-oauthlib mutagen
+   ```
+
+4. **Preparazione cartelle e Database:**
+   Creiamo la cartella `media_music` direttamente dentro il progetto per aggirare i blocchi dei Symlink (SDCard Proxying) in Termux.
+   ```bash
+   mkdir -p media_music
+   python manage.py migrate
+   python manage.py scan_music --gdrive
+   ```
+   *(Ricordati di inserire il file `client_secret.json` scaricato dalla Google Cloud Console nella cartella principale se attivi GDrive.)*
 
 ---
 

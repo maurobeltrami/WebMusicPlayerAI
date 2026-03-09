@@ -39,7 +39,7 @@ def get_drive_service(user_id=None):
             
             # Use run_local_server for local development with fixed port
             # to avoid redirect_uri_mismatch
-            creds = flow.run_local_server(port=8080)
+            creds = flow.run_local_server(port=8080, open_browser=False)
             
         # Save the credentials for the next run
         with open(token_path, 'w') as token:

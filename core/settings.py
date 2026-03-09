@@ -31,18 +31,17 @@ ALLOWED_HOSTS = []
 
 # --- IMPOSTAZIONE CHIAVE PER LA MUSICA LOCALE ---
 GAME_MUSIC_PATH = '/Users/mauroi/Documents/music'
-TERMUX_MUSIC_PATH = '/data/data/com.termux/files/home/storage/music'
+TERMUX_MUSIC_PATH = str(BASE_DIR / 'media_music')
 
 if os.path.exists(GAME_MUSIC_PATH):
     MUSIC_ROOT = GAME_MUSIC_PATH
     print(f"Music Directory Found (PC): {MUSIC_ROOT}")
-elif os.path.exists(TERMUX_MUSIC_PATH):
-    MUSIC_ROOT = TERMUX_MUSIC_PATH
-    print(f"Music Directory Found (Termux): {MUSIC_ROOT}")
 else:
-    # Fallback to Termux path as requested if neither is found, or handle as error
+    # Defaulting to internal project media folder (Termux compatibility)
     MUSIC_ROOT = TERMUX_MUSIC_PATH
-    print(f"WARNING: Music directory not found. Defaulting to: {MUSIC_ROOT}")
+    if not os.path.exists(MUSIC_ROOT):
+        os.makedirs(MUSIC_ROOT, exist_ok=True)
+    print(f"Music Directory set to: {MUSIC_ROOT}")
 # Assicurati che il server Django abbia i permessi di lettura per questa cartella.
 
 
