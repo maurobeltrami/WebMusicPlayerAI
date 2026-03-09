@@ -42,29 +42,23 @@ def get_drive_service(user_id=None):
             flow = InstalledAppFlow.from_client_secrets_file(
                 str(client_secret_path), SCOPES)
             
-            print("\n" + "="*50)
-            print("[!] ATTENZIONE: Configurazione Google Console necessaria!")
-            print("Devi assicurarti che ESATTAMENTE questo URL sia presente")
-            print("tra gli 'URI di reindirizzamento autorizzati' nella Console Cloud:")
-            print("\n    http://localhost:8080/\n")
-            print("(Presta attenzione allo slash finale '/')")
-            print("="*50 + "\n")
-            
-            # Use run_local_server for local development with FIXED port 8080
-            # Google Cloud STRICTLY checks the exact URI including the port
+            # Usiamo run_console invece di run_local_server. In un ambiente headless o 
+            # mobile come Termux, l'avvio del server locale impone la configurazione rigida
+            # del redirect_uri nella console Google Cloud e spesso va in conflitto con  le porte.
+            # run_console ti restituirà un link da aprire: copi il codice e lo incolli nel terminale.
             try:
-                # Force strictly localhost instead of 127.0.0.1 which often causes mismatch
-                creds = flow.run_local_server(
-                    host='localhost',
-                    port=8080, 
-                    open_browser=False, 
-                    prompt='consent', 
-                    access_type='offline',
-                    success_message='Autenticazione riuscita! Puoi tornare a Termux.'
-                )
-            except Exception as e:
-                print(f"\nErrore di reindirizzamento: {e}")
-                print("\nAssicurati che nient'altro stia bloccando la porta 8080 sul telefono.")
+                # Per versioni recenti della libreria in cui run_console potrebbe essere deprecato,
+                # si consiglia di usare run_local_server con bindType o implementare un custom flow, ma per semplicità su termux
+                # proviamo questo o gestiamo gracefully.
+                creds = flow.run_console(access_type='offline')
+            except AttributeError:
+                # Se run_console è stato rimosso dalla versione installata, forziamo un redirect fisso
+                # richiedendo che http://localhost:8250 o simili siano registrati, 
+                # ma la soluzione più robusta per CLI è farsi restituire il link e incollare il codice auth.
+                # OOB (Out-Of-Band) è deprecato da Google. Impostiamo una porta fissa 8250 (o 8080)
+                # DEVI registrare questo URI esatto in Google Cloud Console: http://localhost:8080/
+                print("\n[!] ATTENZIONE: Assicurati di aver aggiunto 'http://localhost:8080/' (esattamente così, con lo slash finale) tra gli URI di reindirizzamento autorizzati nella Google Cloud Console.\n")
+                creds = flow.run_local_server(port=8080, open_browser=False, prompt='consent', access_type='offline')
             
         # Save the credentials for the next run
         with open(token_path, 'w') as token:
