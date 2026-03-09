@@ -12,10 +12,10 @@ export function setupNavigation(browseToCallback) {
 }
 
 // Extracting strictly folder rendering orchestration from original app.js
-export async function browseTo(path, loadTrackCallback, populateFiltersCallback) {
+export async function browseTo(path, loadTrackCallback, populateFiltersCallback, sourceFilter = '') {
     lib.setFolder(path);
     try {
-        const data = await lib.fetchDirectories(path);
+        const data = await lib.fetchDirectories(path, sourceFilter);
         const display = document.getElementById('currentDirDisplay');
         if (display) display.textContent = data.current_path || "/";
 
@@ -29,11 +29,11 @@ export async function browseTo(path, loadTrackCallback, populateFiltersCallback)
             `).join('');
 
             dirList.querySelectorAll('.dir-item').forEach(el => {
-                el.onclick = () => browseTo(el.dataset.path, loadTrackCallback, populateFiltersCallback);
+                el.onclick = () => browseTo(el.dataset.path, loadTrackCallback, populateFiltersCallback, sourceFilter);
             });
         }
 
-        const library = await lib.fetchLibraryTracks(path);
+        const library = await lib.fetchLibraryTracks(path, sourceFilter);
         pl.setPlaylists(library);
         
         if (populateFiltersCallback) populateFiltersCallback();

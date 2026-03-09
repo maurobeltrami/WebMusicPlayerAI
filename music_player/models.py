@@ -6,6 +6,7 @@ class Track(models.Model):
     artist = models.CharField(max_length=255, db_index=True)
     album = models.CharField(max_length=255, db_index=True)
     file_path = models.CharField(max_length=1024, unique=True, help_text="Percorso relativo per file locali o ID per Google Drive")
+    folder_path = models.CharField(max_length=2048, blank=True, null=True, db_index=True, help_text="Percorso logico della cartella (es. Artista/Album o ID genitore)")
     cover_url = models.CharField(max_length=1024, blank=True, null=True)
     
     # Enum per distinguere le sorgenti

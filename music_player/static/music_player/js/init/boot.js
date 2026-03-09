@@ -74,9 +74,24 @@ export async function initApp() {
         setupModals(loadTrackCallback);
         setupEqualizer();
 
-        const boundBrowseTo = (path) => browseTo(path, loadTrackCallback, populateFiltersCallback);
+        const getSourceFilter = () => {
+            const filter = document.getElementById('sourceFilter');
+            return filter ? filter.value : '';
+        };
+
+        const boundBrowseTo = (path) => browseTo(path, loadTrackCallback, populateFiltersCallback, getSourceFilter());
         setupNavigation(boundBrowseTo);
         setupRouter();
+
+        // Listen for source changes to reload current directory
+        const sourceFilterEl = document.getElementById('sourceFilter');
+        if (sourceFilterEl) {
+            sourceFilterEl.addEventListener('change', () => {
+                import('../data/library.js').then(lib => {
+                    boundBrowseTo(lib.currentFolder || '');
+                });
+            });
+        }
 
         // Initial Boot sequence
         await boundBrowseTo('');

@@ -81,6 +81,11 @@ class TrackListView(APIView):
         if source_param:
             tracks = tracks.filter(source=source_param)
 
+        # Filtro per cartella
+        folder_param = request.query_params.get('folder', '')
+        if folder_param:
+            tracks = tracks.filter(folder_path=folder_param)
+
         tracks_data = []
         for track in tracks:
             tracks_data.append({
@@ -100,27 +105,69 @@ class DirectoryListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        music_root = Path(settings.MUSIC_ROOT)
+        source_param = request.query_params.get('source', 'local')
         current_path_param = request.query_params.get('path', '')
         
-        target_dir = music_root
-        if current_path_param:
-            target_dir = music_root / current_path_param
-            
-        # Security check semplificato per Termux (bypass link simbolici)
+        # Security check semplificato per impedire navigation trasversale
         if '..' in current_path_param:
              return Response({"error": "Accesso negato"}, status=403)
 
-        if not target_dir.exists() or not target_dir.is_dir():
-            return Response({"error": "Cartella non trovata"}, status=404)
-
         directories = []
-        for item in target_dir.iterdir():
-            if item.is_dir() and not item.name.startswith('.'):
+
+        if source_param == 'gdrive':
+            # --- Navigazione virtuale su Database (Google Drive) ---
+            
+            # Estraiamo tutti i percorsi unici non vuoti per GDrive
+            all_paths = Track.objects.filter(
+                source='gdrive'
+            ).exclude(
+                folder_path=''
+            ).exclude(
+                folder_path__isnull=True
+            ).values_list('folder_path', flat=True).distinct()
+            
+            subdirs = set()
+            
+            for path in all_paths:
+                # Se stiamo cercando folder root
+                if not current_path_param:
+                    # Prendi il primo componente del percorso (es. in "A/B/C" prende "A")
+                    first_level = path.split('/')[0]
+                    subdirs.add(first_level)
+                else:
+                    # Se il percorso inizia con la cartella che stiamo ispezionando
+                    if path.startswith(current_path_param + '/') or path == current_path_param:
+                        # Rimuoviamo il prefisso corrente
+                        remainder = path[len(current_path_param):].lstrip('/')
+                        if remainder:
+                            # Prendi il livello successivo
+                            next_level = remainder.split('/')[0]
+                            subdirs.add(f"{current_path_param}/{next_level}")
+
+            for subdir in subdirs:
+                # Mostriamo solo il nome finale ricavandolo dal path completo
+                folder_name = subdir.split('/')[-1]
                 directories.append({
-                    'name': item.name,
-                    'path': str(item.relative_to(music_root))
+                    'name': folder_name,
+                    'path': subdir
                 })
+                
+        else:
+            # --- Navigazione fisica su File System (Local Disk) ---
+            music_root = Path(settings.MUSIC_ROOT)
+            target_dir = music_root
+            if current_path_param:
+                target_dir = music_root / current_path_param
+
+            if not target_dir.exists() or not target_dir.is_dir():
+                return Response({"error": "Cartella non trovata"}, status=404)
+
+            for item in target_dir.iterdir():
+                if item.is_dir() and not item.name.startswith('.'):
+                    directories.append({
+                        'name': item.name,
+                        'path': str(item.relative_to(music_root))
+                    })
         
         # Sort directories a-z
         directories.sort(key=lambda x: x['name'].lower())

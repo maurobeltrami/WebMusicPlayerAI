@@ -39,17 +39,74 @@ class Command(BaseCommand):
         tracks_updated = 0
         errors = 0
 
-        # Query for audio files
-        # We look for mimeTypes starting with audio/
-        query = "mimeType contains 'audio/' and trashed = false"
-        
+        # Mappa Cartelle (ID -> {name, parent_id})
+        self.stdout.write('1/2. Caricamento struttura cartelle da Drive...')
+        folders_map = {}
         page_token = None
+        folder_query = "mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+        
         while True:
             try:
                 results = service.files().list(
-                    q=query,
+                    q=folder_query,
                     pageSize=1000,
-                    fields="nextPageToken, files(id, name, mimeType, size)",
+                    fields="nextPageToken, files(id, name, parents)",
+                    pageToken=page_token
+                ).execute()
+                
+                for item in results.get('files', []):
+                    parent_id = item.get('parents', [None])[0]
+                    folders_map[item['id']] = {
+                        'name': item['name'],
+                        'parent_id': parent_id
+                    }
+                
+                page_token = results.get('nextPageToken', None)
+                if page_token is None:
+                    break
+            except Exception as e:
+                self.stdout.write(self.style.WARNING(f'Errore nel caricamento cartelle: {e}'))
+                break
+
+        # Funzione helper ricorsiva per estrarre percorso, artista e album
+        def get_metadata_from_hierarchy(current_parent_id):
+            path_parts = []
+            curr_id = current_parent_id
+            
+            while curr_id and curr_id in folders_map:
+                folder = folders_map[curr_id]
+                path_parts.insert(0, folder['name'])
+                curr_id = folder['parent_id']
+                
+            folder_path = "/".join(path_parts) if path_parts else ""
+            
+            artist = 'Sconosciuto (Drive)'
+            album = 'Sconosciuto (Drive)'
+            
+            # Se la cartella ha almeno 2 livelli (es. Root/Artista/Album)
+            # consideriamo il penultimo come Artista e l'ultimo come Album.
+            # Se ha solo 1 livello, lo consideriamo come Artista.
+            if len(path_parts) >= 2:
+                artist = path_parts[-2]
+                album = path_parts[-1]
+            elif len(path_parts) == 1:
+                artist = path_parts[0]
+                album = 'Singoli' # Se non c'è la cartella dell'album
+                
+            return artist, album, folder_path
+
+        self.stdout.write('2/2. Scansione file audio e associazione metadati...')
+        
+        # Query for audio files
+        audio_query = "mimeType contains 'audio/' and trashed = false"
+        page_token = None
+        
+        while True:
+            try:
+                results = service.files().list(
+                    q=audio_query,
+                    pageSize=1000,
+                    fields="nextPageToken, files(id, name, parents, mimeType, size)",
                     pageToken=page_token
                 ).execute()
                 
@@ -58,46 +115,48 @@ class Command(BaseCommand):
                 for item in items:
                     file_id = item['id']
                     filename = item['name']
+                    parent_id = item.get('parents', [None])[0]
                     
-                    # Estrai titolo stimato dal nome del file (senza estensione)
+                    # Estrai titolo stimato dal nome del file
                     estimated_title = os.path.splitext(filename)[0]
                     
-                    # Le API di base di Drive non leggono i tag ID3 internamente senza scaricare il file.
-                    # Per l'Open Source, salviamo il brano usando il nome del file come titolo temporaneo.
-                    # Utenti avanzati potrebbero voler scaricare i primi KB del file in memoria per leggere i tag,
-                    # ma rallenterebbe troppo la scansione iniziale.
+                    # Ricava metadati dalle cartelle genitrici
+                    artist, album, folder_path = get_metadata_from_hierarchy(parent_id)
                     
                     obj, created = Track.objects.update_or_create(
                         drive_file_id=file_id,
                         source='gdrive',
                         defaults={
-                            'file_path': file_id, # Usiamo l'ID come path per Drive
+                            'file_path': file_id,
+                            'folder_path': folder_path,
                             'title': estimated_title,
-                            'artist': 'Sconosciuto (Drive)',
-                            'album': 'Sconosciuto (Drive)',
-                            'cover_url': '' # Nessuna copertina locale per drive
+                            'artist': artist,
+                            'album': album,
+                            'cover_url': ''
                         }
                     )
                     
                     if created:
                         tracks_created += 1
-                        self.stdout.write(f'Aggiunto da Drive: {estimated_title}')
+                        self.stdout.write(f'Nuovo [{artist} - {album}]: {estimated_title}')
                     else:
                         tracks_updated += 1
+                        # self.stdout.write(f'Aggiornato: {estimated_title}')
 
                 page_token = results.get('nextPageToken', None)
                 if page_token is None:
                     break
                     
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f'Errore durante la scansione Drive: {e}'))
+                self.stdout.write(self.style.ERROR(f'Errore durante la scansione audio: {e}'))
                 errors += 1
                 break
 
         self.stdout.write(self.style.SUCCESS(
-            f'Scansione Google Drive completata!\n'
+            f'\nScansione Google Drive completata!\n'
+            f'- Struttura cartelle analizzate: {len(folders_map)}\n'
             f'- Nuovi brani inseriti: {tracks_created}\n'
-            f'- Brani aggiornati: {tracks_updated}\n'
+            f'- Brani aggiornati/sincronizzati: {tracks_updated}\n'
             f'- Errori: {errors}'
         ))
 
