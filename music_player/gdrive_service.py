@@ -42,9 +42,9 @@ def get_drive_service(user_id=None):
             flow = InstalledAppFlow.from_client_secrets_file(
                 str(client_secret_path), SCOPES)
             
-            # Use run_local_server for local development with fixed port
-            # to avoid redirect_uri_mismatch
-            creds = flow.run_local_server(port=8080, open_browser=False, prompt='consent', access_type='offline')
+            # Use run_local_server for local development with port=0
+            # to dynamically assign a free port and avoid 'Address already in use' errors
+            creds = flow.run_local_server(port=0, open_browser=False, prompt='consent', access_type='offline')
             
         # Save the credentials for the next run
         with open(token_path, 'w') as token:
